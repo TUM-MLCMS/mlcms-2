@@ -1,0 +1,254 @@
+package org.vadere.gui.onlinevisualization.view;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.FormLayout;
+
+import org.vadere.gui.components.control.IViewportChangeListener;
+import org.vadere.gui.components.control.JViewportChangeListener;
+import org.vadere.gui.components.control.PanelResizeListener;
+import org.vadere.gui.components.control.ViewportChangeListener;
+import org.vadere.gui.components.utils.Messages;
+import org.vadere.gui.components.utils.Resources;
+import org.vadere.gui.components.utils.SwingUtils;
+import org.vadere.gui.components.view.ScenarioElementView;
+import org.vadere.gui.components.view.ScenarioScrollPane;
+import org.vadere.gui.components.view.SimulationInfoPanel;
+import org.vadere.gui.components.control.simulation.ActionGeneratePNG;
+import org.vadere.gui.components.control.simulation.ActionGenerateSVG;
+import org.vadere.gui.components.control.simulation.ActionGenerateTikz;
+import org.vadere.gui.onlinevisualization.control.ActionOnlineVisMenu;
+import org.vadere.gui.onlinevisualization.control.ActionShowMesh;
+import org.vadere.gui.onlinevisualization.control.ActionShowPotentialField;
+import org.vadere.gui.onlinevisualization.model.OnlineVisualizationModel;
+import org.vadere.gui.components.control.simulation.ActionSwapSelectionMode;
+import org.vadere.gui.components.control.simulation.ActionVisualization;
+import org.vadere.gui.components.view.DialogFactory;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
+
+import javax.swing.*;
+
+public class OnlineVisualisationWindow extends JPanel implements Observer {
+
+	private static final long serialVersionUID = 3522170593760789565L;
+	private static final Resources resources = Resources.getInstance("global");
+	private ScenarioElementView jsonPanel;
+	private JToolBar toolbar;
+	private SimulationInfoPanel infoPanel;
+
+	public OnlineVisualisationWindow(final MainPanel mainPanel, final OnlineVisualizationModel model) {
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int windowHeight = screenSize.height - 250;
+
+		CellConstraints cc = new CellConstraints();
+		FormLayout spiltLayout = new FormLayout("2dlu, default:grow(0.75), 2dlu, default:grow(0.25), 2dlu", // col
+				"2dlu, default, 2dlu, fill:default:grow, 2dlu, default, 2dlu"); // rows
+
+		JScrollPane scrollPane = new ScenarioScrollPane(mainPanel, model);
+		model.addScaleChangeListener(mainPanel);
+		mainPanel.addComponentListener(new PanelResizeListener(model));
+		mainPanel.setScrollPane(scrollPane);
+		scrollPane.getViewport()
+				.addChangeListener(new JViewportChangeListener(model, scrollPane.getVerticalScrollBar()));
+
+		IViewportChangeListener viewportChangeListener = new ViewportChangeListener(model, scrollPane);
+		model.addViewportChangeListener(viewportChangeListener);
+
+		jsonPanel = new ScenarioElementView(model);
+		jsonPanel.setEditable(false);
+
+		model.addObserver(mainPanel);
+		model.addSelectScenarioElementListener(jsonPanel);
+
+		this.toolbar = new JToolBar("OnlineVisualizationToolbar");
+		toolbar.setFloatable(false);
+		// toolbar.setBorderPainted(false);
+		toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
+		toolbar.setAlignmentY(Component.TOP_ALIGNMENT);
+		int toolbarSize = Integer.parseInt(resources.getProperty("Toolbar.size"));
+		toolbar.setPreferredSize(new Dimension(toolbarSize, toolbarSize));
+
+		infoPanel = new SimulationInfoPanel(model);
+
+		model.addObserver(this);
+		model.addObserver(infoPanel);
+
+		setLayout(spiltLayout);
+
+
+		int iconHeight = Integer.valueOf(resources.getProperty("ProjectView.icon.height.value"));
+		int iconWidth = Integer.valueOf(resources.getProperty("ProjectView.icon.width.value"));
+
+
+		AbstractAction openSettingsDialog = new ActionVisualization("settings", resources.getIcon("settings.png", iconWidth, iconHeight), model) {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						DialogFactory.createSettingsDialog(model).setVisible(true);
+					}
+				};
+
+
+		AbstractAction paintArrowAction = new AbstractAction("paintArrowAction",
+				resources.getIcon("walking_direction.png", iconWidth, iconHeight)) {
+
+			private static final long serialVersionUID = 14131313L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				model.config.setShowWalkdirection(!model.config.isShowWalkdirection());
+				model.notifyObservers();
+			}
+		};
+
+		AbstractAction paintPedestriansAction = new AbstractAction("paintPedestrianAction",
+				resources.getIcon("pedestrian.png", iconWidth, iconHeight)) {
+
+			private static final long serialVersionUID = 14131313L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				model.config.setShowPedestrians(!model.config.isShowPedestrians());
+				model.notifyObservers();
+			}
+		};
+
+		AbstractAction showGroupInformationAction = new AbstractAction("showGroupInformationAction",
+				resources.getIcon("group.png", iconWidth, iconHeight)) {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				model.config.setShowGroups(!model.config.isShowGroups());
+				model.notifyObservers();
+			}
+		};
+
+		AbstractAction drawVoronoiDiagram = new ActionSwapSelectionMode("draw_voronoi_diagram", resources.getIcon("voronoi.png", iconWidth, iconHeight), model);
+
+		AbstractAction drawMesh = new ActionShowMesh("draw_mesh", resources.getIcon("triangulation.png", iconWidth, iconHeight), model);
+
+
+		AbstractAction paintGridAction = new AbstractAction("paintGridAction",
+				resources.getIcon("grid.png", iconWidth, iconHeight)) {
+
+			private static final long serialVersionUID = 1123132132L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				model.config.setShowGrid(!model.config.isShowGrid());
+				model.notifyObservers();
+			}
+		};
+
+		AbstractAction paintTrajectories = new AbstractAction("paintTrajectoriesAction",
+				resources.getIcon("trajectories.png", iconWidth, iconHeight)) {
+
+			private static final long serialVersionUID = 1123132132L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				model.config.setShowTrajectories(!model.config.isShowTrajectories());
+				model.notifyObservers();
+			}
+		};
+
+		AbstractAction paintDensity = new AbstractAction("paintDensityAction",
+				resources.getIcon("density.png", iconWidth, iconHeight)) {
+
+			private static final long serialVersionUID = 1123132132L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				model.config.setShowDensity(!model.config.isShowDensity());
+				model.notifyObservers();
+			}
+		};
+
+		OnlinevisualizationRenderer renderer = new OnlinevisualizationRenderer(model);
+		renderer.setLogo(resources.getImage("vadere.png"));
+		ActionGeneratePNG generatePNG = new ActionGeneratePNG(
+				Messages.getString("ProjectView.btnPNGSnapshot.tooltip"),
+				resources.getIcon("camera_png.png", iconWidth, iconHeight),
+				renderer,
+				model);
+
+
+		ActionGenerateSVG generateSVG = new ActionGenerateSVG(
+				Messages.getString("ProjectView.btnSVGSnapshot.tooltip"),
+				resources.getIcon("camera_svg.png", iconWidth, iconHeight),
+				renderer,
+				model);
+
+		ActionGenerateTikz generateTikz = new ActionGenerateTikz(
+				Messages.getString("ProjectView.btnTikZSnapshot.tooltip"),
+				resources.getIcon("camera_tikz.png", iconWidth, iconHeight),
+				renderer,
+				model);
+
+        ActionShowPotentialField showPotentialField = new ActionShowPotentialField(
+                "showPotentialField",
+                resources.getIcon("potentialField.png", iconWidth, iconHeight),
+                model);
+
+		mainPanel.addRendererChangeListener(generatePNG);
+		mainPanel.addRendererChangeListener(generateSVG);
+		mainPanel.addRendererChangeListener(generateTikz);
+		mainPanel.addRendererChangeListener(showPotentialField);
+
+
+		SwingUtils.addActionToToolbar(toolbar, paintPedestriansAction,
+				Messages.getString("ProjectView.btnShowPedestrian.tooltip"));
+		SwingUtils.addActionToToolbar(toolbar, paintTrajectories,
+				Messages.getString("ProjectView.btnShowTrajectories.tooltip"));
+		SwingUtils.addActionToToolbar(toolbar, paintArrowAction,
+				Messages.getString("ProjectView.btnShowWalkingDirection.tooltip"));
+		SwingUtils.addActionToToolbar(toolbar, showGroupInformationAction,
+				Messages.getString("ProjectView.btnShowGroupInformation.tooltip"));
+		SwingUtils.addActionToToolbar(toolbar, drawVoronoiDiagram,
+				Messages.getString("ProjectView.btnDrawVoronoiDiagram.tooltip"));
+		SwingUtils.addActionToToolbar(toolbar, drawMesh,
+				Messages.getString("ProjectView.btnDrawMesh.tooltip"));
+
+		toolbar.addSeparator();
+
+		SwingUtils.addActionToToolbar(toolbar, paintGridAction, Messages.getString("ProjectView.btnShowGrid.tooltip"));
+		SwingUtils.addActionToToolbar(toolbar, paintDensity, Messages.getString("ProjectView.btnShowDensity.tooltip"));
+
+		toolbar.addSeparator();
+
+		ArrayList<Action> imgOptions = new ArrayList<>();
+		imgOptions.add(generatePNG);
+		imgOptions.add(generateSVG);
+		imgOptions.add(generateTikz);
+
+		ActionOnlineVisMenu imgDialog = new ActionOnlineVisMenu(
+				"camera_menu",
+				resources.getIcon("camera.png", iconWidth, iconHeight), imgOptions);
+		JButton imgMenuBtn =
+				SwingUtils.addActionToToolbar(toolbar, imgDialog, Messages.getString("ProjectView.btnSnapshot.tooltip"));
+		imgDialog.setParent(imgMenuBtn);
+
+        SwingUtils.addActionToToolbar(toolbar, showPotentialField, Messages.getString("OnlineVis.btnShowPotentialfield.tooltip"));
+
+		toolbar.add(Box.createHorizontalGlue());
+
+		SwingUtils.addActionToToolbar(toolbar, openSettingsDialog,
+				Messages.getString("ProjectView.btnSettings.tooltip"));
+
+		add(toolbar, cc.xyw(2, 2, 3));
+		add(scrollPane, cc.xy(2, 4));
+		scrollPane.setPreferredSize(new Dimension(1, windowHeight));
+		add(jsonPanel, cc.xy(4, 4));
+		add(infoPanel, cc.xyw(2, 6, 3));
+
+		repaint();
+		revalidate();
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		repaint();
+	}
+}
