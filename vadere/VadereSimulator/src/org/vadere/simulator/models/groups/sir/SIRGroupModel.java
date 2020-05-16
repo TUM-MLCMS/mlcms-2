@@ -16,6 +16,8 @@ import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.DynamicElementContainer;
 import org.vadere.state.scenario.Pedestrian;
 import org.vadere.state.scenario.Topography;
+import org.vadere.util.geometry.LinkedCellsGrid;
+
 
 import java.util.*;
 
@@ -32,6 +34,8 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 	private Topography topography;
 	private IPotentialFieldTarget potentialFieldTarget;
 	private int totalInfected = 0;
+	private double secondCounter = 0;
+	private double previousTimeStep = 0;
 
 	public SIRGroupModel() {
 		this.groupsById = new LinkedHashMap<>();
@@ -185,23 +189,35 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 		// check the positions of all pedestrians and switch groups to INFECTED (or REMOVED).
 		DynamicElementContainer<Pedestrian> c = topography.getPedestrianDynamicElements();
 
-		if (c.getElements().size() > 0) {
-			for(Pedestrian p : c.getElements()) {
-				// loop over neighbors and set infected if we are close
-				for(Pedestrian p_neighbor : c.getElements()) {
-					if(p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
-						continue;
-					double dist = p.getPosition().distance(p_neighbor.getPosition());
-					if (dist < attributesSIRG.getInfectionMaxDistance() &&
-							this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
-						SIRGroup g = getGroup(p);
-						if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
-							elementRemoved(p);
-							assignToGroup(p, SIRType.ID_INFECTED.ordinal());
+		if(this.secondCounter < 5) {
+			this.secondCounter = this.secondCounter + (simTimeInSec - previousTimeStep);
+		}
+
+		else{
+			if (c.getElements().size() > 0) {
+				for(Pedestrian p : c.getElements()) {
+					// loop over neighbors and set infected if we are close
+					for(Pedestrian p_neighbor : c.getElements()) {
+						if(p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
+							continue;
+						double dist = p.getPosition().distance(p_neighbor.getPosition());
+						if (dist < attributesSIRG.getInfectionMaxDistance() &&
+								this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
+							SIRGroup g = getGroup(p);
+							if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
+								elementRemoved(p);
+								assignToGroup(p, SIRType.ID_INFECTED.ordinal());
+							}
 						}
 					}
 				}
 			}
+
+			this.secondCounter = 0;
+
 		}
+
+		this.previousTimeStep = simTimeInSec;
+
 	}
 }

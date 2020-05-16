@@ -106,10 +106,24 @@ public abstract class SimulationModel<T extends DefaultSimulationConfig> extends
 
 		int groupId = ped.getGroupIds().getFirst();
 		Color c = colorMap.get(groupId);
-		if (c == null) {
-			c = new Color(Color.HSBtoRGB(random.nextFloat(), 1f, 0.75f));
+
+		if(groupId == 0) {
+			c = new Color(210,0,0);
 			colorMap.put(groupId, c);
 		}
+
+		else if (groupId == 1) {
+			c = new Color(0,160,0);
+			colorMap.put(groupId, c);
+		}
+
+		else {
+			if (c == null) {
+				c = new Color(Color.HSBtoRGB(random.nextFloat(), 1f, 0.75f));
+				colorMap.put(groupId, c);
+			}
+		}
+
 		return c;
 	}
 

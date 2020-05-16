@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import os
+
+import matplotlib as matplotlib
 import pandas as pd
 import plotly.graph_objects as go
 
+matplotlib.use('agg')
+matplotlib.pyplot.switch_backend('Agg')
 
 def file_df_to_count_df(df,
                         ID_SUSCEPTIBLE=1,
