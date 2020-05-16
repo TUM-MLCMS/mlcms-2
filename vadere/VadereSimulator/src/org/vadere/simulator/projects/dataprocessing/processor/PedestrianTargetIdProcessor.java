@@ -1,7 +1,7 @@
 package org.vadere.simulator.projects.dataprocessing.processor;
 
 import org.vadere.annotation.factories.dataprocessors.DataProcessorClass;
-import org.vadere.simulator.control.SimulationState;
+import org.vadere.simulator.control.simulation.SimulationState;
 import org.vadere.simulator.projects.dataprocessing.datakey.TimestepPedestrianIdKey;
 import org.vadere.state.scenario.Pedestrian;
 
@@ -23,7 +23,8 @@ public class PedestrianTargetIdProcessor extends DataProcessor<TimestepPedestria
 		Collection<Pedestrian> peds = state.getTopography().getElements(Pedestrian.class);
 
 		peds.forEach(p -> this.putValue(new TimestepPedestrianIdKey(state.getStep(), p.getId()),
-				p.getTargets().isEmpty() ? -1 : p.getTargets().getFirst()));
+				!p.hasNextTarget() ? -1 :
+						p.getNextTargetId()));
 	}
 
 }

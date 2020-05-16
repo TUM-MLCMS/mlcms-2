@@ -1,6 +1,6 @@
 package org.vadere.simulator.projects.dataprocessing.processor;
 
-import org.vadere.simulator.control.SimulationState;
+import org.vadere.simulator.control.simulation.SimulationState;
 import org.vadere.simulator.projects.dataprocessing.ProcessorManager;
 import org.vadere.simulator.projects.dataprocessing.datakey.PedestrianIdKey;
 import org.vadere.simulator.projects.dataprocessing.datakey.TimestepKey;
@@ -50,7 +50,8 @@ public class AreaSpeedProcessor extends AreaDataProcessor<Double> {
             }
         }
 
-        this.putValue(new TimestepKey(step), (pedCount > 0 ? sumVelocities / pedCount : 0.0));
+        // Insert a NaN value if there are no agents available (see #287)
+        this.putValue(new TimestepKey(step), (pedCount > 0 ? sumVelocities / pedCount : Double.NaN));
     }
 
     @Override

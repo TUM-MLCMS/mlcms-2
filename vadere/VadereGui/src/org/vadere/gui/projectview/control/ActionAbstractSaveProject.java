@@ -6,15 +6,20 @@ import org.vadere.gui.projectview.VadereApplication;
 import org.vadere.gui.projectview.model.ProjectViewModel;
 import org.vadere.gui.projectview.utils.ApplicationWriter;
 import org.vadere.gui.projectview.view.VDialogManager;
+import org.vadere.util.config.VadereConfig;
 import org.vadere.util.io.IOUtils;
 import org.vadere.util.logging.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 public abstract class ActionAbstractSaveProject extends AbstractAction {
 
@@ -118,18 +123,11 @@ public abstract class ActionAbstractSaveProject extends AbstractAction {
 	}
 
 	private static void updateRecentProjectPreferences(ProjectViewModel model) {
-		Preferences preferences = Preferences.userNodeForPackage(VadereApplication.class);
-		final String key = "recent_projects";
-		final TreeSet<String> values = new TreeSet(Arrays.asList(preferences.get(key, "").split(",")));
+		final String key = "History.recentProjects";
+		List<String> values = VadereConfig.getConfig().getList(String.class, key, Collections.EMPTY_LIST);
 		values.add(model.getCurrentProjectPath());
-		String value = values.stream().reduce("", (a, b) -> a + "," + b);
-		System.out.println(values.toString());
-		preferences.put(key, value.replaceFirst(",", ""));
-	}
-
-	static void savePreferences() throws IOException, BackingStoreException {
-		ApplicationWriter.savePreferences();
-		logger.info("save preferences");
+		values = values.stream().distinct().collect(Collectors.toList());
+		VadereConfig.getConfig().setProperty(key, values);
 	}
 
 }

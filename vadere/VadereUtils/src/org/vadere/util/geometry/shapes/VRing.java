@@ -1,5 +1,7 @@
 package org.vadere.util.geometry.shapes;
 
+import com.github.davidmoten.rtree.geometry.internal.RectangleDouble;
+
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
@@ -246,7 +248,11 @@ public class VRing implements VShape {
 
 	@Override
 	public List<VPoint> getPath() {
-		throw new UnsupportedOperationException("not jet implemented.");
+		throw new UnsupportedOperationException("not yet implemented.");
 	}
 
+	@Override
+	public List<VLine> lines() {
+		throw new UnsupportedOperationException("not yet implemented.");
+	}
 }

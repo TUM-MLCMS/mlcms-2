@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -24,7 +25,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.lwjgl.opencl.CL10.CL_DEVICE_TYPE_ALL;
+import static org.lwjgl.opencl.CL10.CL_KERNEL_LOCAL_MEM_SIZE;
+import static org.lwjgl.opencl.CL10.CL_KERNEL_WORK_GROUP_SIZE;
 import static org.lwjgl.opencl.CL10.clGetDeviceIDs;
+import static org.lwjgl.opencl.CL10.clGetKernelWorkGroupInfo;
 import static org.lwjgl.opencl.CL10.clGetPlatformIDs;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
@@ -177,7 +181,7 @@ public class CLUtils {
 
     public static IntBuffer toIntBuffer(@NotNull final int[] array) {
     	IntBuffer intBuffer = MemoryUtil.memAllocInt(array.length);
-    	return intBuffer;
+    	return toIntBuffer(array, intBuffer);
     }
 
 	public static IntBuffer toIntBuffer(@NotNull final int[] array, @NotNull final IntBuffer intBuffer) {
@@ -199,10 +203,10 @@ public class CLUtils {
         return floatBuffer;
     }
 
-	public static int[] toIntArray(@NotNull final IntBuffer floatBuffer, final int size) {
+	public static int[] toIntArray(@NotNull final IntBuffer intBuffer, final int size) {
 		int[] result = new int[size];
 		for(int i = 0; i < size; i++) {
-			result[i] = floatBuffer.get(i);
+			result[i] = intBuffer.get(i);
 		}
 		return result;
 	}
@@ -223,4 +227,76 @@ public class CLUtils {
 	    MemoryUtil.memFree(buffer);
         return newBuffer;
     }
+
+	/**
+	 * Returns an integer n such that n = <tt>base</tt>^k, where k > 0 is the smallest integer such that
+	 * n >= <tt>value</tt>.
+	 *
+	 * @param value the value
+	 * @param base  the base
+	 *
+	 * @return an integer n such that n = 2 * <tt>multiple</tt>^k
+	 */
+	public static long power(long value, long base) {
+		assert value > 0 && base > 0;
+
+		long result = base;
+		while (result < value) {
+			result *= base;
+		}
+		return result;
+	}
+
+	/**
+	 * Returns an long n such that n = <tt>base</tt> * k, where k > 0 is the smallest long such that
+	 * n >= <tt>value</tt>.
+	 *
+	 * @param value the value
+	 * @param base  the multiple
+	 *
+	 * @return an integer n such that n = 2 * <tt>multiple</tt>^k
+	 */
+	public static long multiple(long value, long base) {
+		long result = base;
+		while (result < value) {
+			result += base;
+		}
+		return result;
+	}
+
+	/**
+	 * Computes the the factor radix which is 1 for all long of the form 2^k.
+	 *
+	 * @param L
+	 * @return
+	 */
+	public static long factorRadix2(long L){
+		if(L==0){
+			return 0;
+		}else{
+			for(int log2L = 0; (L & 1) == 0; L >>= 1, log2L++);
+			return L;
+		}
+	}
+
+	public static long getMaxWorkGroupSizeForKernel(long clDevice, long clKernel, long workItemMem, long max_work_group_size, long max_local_memory_size) throws OpenCLException {
+		try (MemoryStack stack = stackPush()) {
+			LongBuffer pp = stack.mallocLong(1);
+			CLInfo.checkCLError(clGetKernelWorkGroupInfo(clKernel, clDevice, CL_KERNEL_LOCAL_MEM_SIZE , pp, null));
+
+			/*long kernelLocalMemory = pp.get(0);
+			logger.debug("CL_KERNEL_LOCAL_MEM_SIZE = (" + clKernel + ") = " + kernelLocalMemory);
+			logger.debug("memory for each  = " + (workItemMem + kernelLocalMemory));
+
+			long maxWorkGroupSizeForLocalMemory = (workItemMem + kernelLocalMemory) == 0 ? 0 : (max_local_memory_size / (workItemMem + kernelLocalMemory));*/
+			long maxWorkGroupSizeForLocalMemory = workItemMem == 0 ? max_work_group_size : (max_local_memory_size / (workItemMem));
+			PointerBuffer ppp = stack.mallocPointer(1);
+			CLInfo.checkCLError(clGetKernelWorkGroupInfo(clKernel, clDevice, CL_KERNEL_WORK_GROUP_SIZE , ppp, null));
+
+			long maxWorkGroupSizeForPrivateMemory = ppp.get(0);
+			log.debug("CL_KERNEL_WORK_GROUP_SIZE (" + clKernel + ") = " + maxWorkGroupSizeForPrivateMemory);
+			//return Math.min(max_work_group_size, Math.min(maxWorkGroupSizeForLocalMemory, maxWorkGroupSizeForPrivateMemory));
+			return Math.min(max_work_group_size, Math.min(maxWorkGroupSizeForLocalMemory, maxWorkGroupSizeForPrivateMemory));
+		}
+	}
 }

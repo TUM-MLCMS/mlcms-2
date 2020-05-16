@@ -2,19 +2,22 @@ package org.vadere.state.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.vadere.state.events.json.EventInfo;
-import org.vadere.state.events.json.EventInfoStore;
-import org.vadere.state.events.types.Event;
-import org.vadere.state.events.types.EventTimeframe;
-import org.vadere.state.events.types.WaitInAreaEvent;
-import org.vadere.util.geometry.shapes.VRectangle;
-import org.vadere.util.geometry.shapes.VShape;
 
-import java.io.IOException;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+import org.vadere.state.attributes.models.AttributesFloorField;
+import org.vadere.state.attributes.scenario.AttributesObstacle;
+import org.vadere.state.attributes.scenario.AttributesTarget;
+import org.vadere.state.psychology.perception.json.StimulusInfo;
+import org.vadere.state.psychology.perception.json.StimulusInfoStore;
+import org.vadere.state.psychology.perception.types.Stimulus;
+import org.vadere.state.psychology.perception.types.Timeframe;
+import org.vadere.state.psychology.perception.types.WaitInArea;
+import org.vadere.state.scenario.Obstacle;
+import org.vadere.state.scenario.Target;
+import org.vadere.state.scenario.Topography;
+import org.vadere.util.geometry.shapes.VRectangle;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,52 +26,127 @@ import static org.junit.Assert.*;
 public class StateJsonConverterTest {
 
     @NotNull
-    private EventInfoStore getEventInfoStore() {
-        // Create "EventTimeframe" and "Event" objects and encapsulate them in "EventInfo" objects.
-        EventTimeframe eventTimeframe = new EventTimeframe(5, 30, false, 0);
+    private StimulusInfoStore getEventInfoStore() {
+        // Create "Timeframe" and "Stimulus" objects and encapsulate them in "StimulusInfo" objects.
+        Timeframe timeframe = new Timeframe(5, 30, false, 0);
 
-        List<Event> events = new ArrayList<>();
-        events.add(new WaitInAreaEvent(0, new VRectangle(12.5, 0, 5, 6)));
+        List<Stimulus> stimuli = new ArrayList<>();
+        stimuli.add(new WaitInArea(0, new VRectangle(12.5, 0, 5, 6)));
 
-        EventInfo eventInfo1 = new EventInfo();
-        eventInfo1.setEventTimeframe(eventTimeframe);
-        eventInfo1.setEvents(events);
+        StimulusInfo stimulusInfo1 = new StimulusInfo();
+        stimulusInfo1.setTimeframe(timeframe);
+        stimulusInfo1.setStimuli(stimuli);
 
-        List<EventInfo> eventInfos = new ArrayList<>();
-        eventInfos.add(eventInfo1);
+        List<StimulusInfo> stimulusInfos = new ArrayList<>();
+        stimulusInfos.add(stimulusInfo1);
 
-        EventInfoStore eventInfoStore = new EventInfoStore();
-        eventInfoStore.setEventInfos(eventInfos);
+        StimulusInfoStore stimulusInfoStore = new StimulusInfoStore();
+        stimulusInfoStore.setStimulusInfos(stimulusInfos);
 
-        return eventInfoStore;
+        return stimulusInfoStore;
     }
 
     @Test
     public void deserializeEventsFromArrayNodeReturnsEmptyEventInfoStoreIfPassingNullNode() {
         int expectedSize = 0;
 
-        EventInfoStore eventInfoStore = StateJsonConverter.deserializeEventsFromArrayNode(null);
+        StimulusInfoStore stimulusInfoStore = StateJsonConverter.deserializeStimuliFromArrayNode(null);
 
-        assertEquals(expectedSize, eventInfoStore.getEventInfos().size());
+        assertEquals(expectedSize, stimulusInfoStore.getStimulusInfos().size());
     }
 
     @Test
     public void deserializeEventsFromArrayNodeReturnsEventInfoStoreIfPassingValidArrayNode() {
-        EventInfoStore expectedEventInfoStore = getEventInfoStore();
+        StimulusInfoStore expectedStimulusInfoStore = getEventInfoStore();
         ObjectMapper mapper = new JacksonObjectMapper();
-        JsonNode jsonNode = mapper.convertValue(expectedEventInfoStore, JsonNode.class);
+        JsonNode jsonNode = mapper.convertValue(expectedStimulusInfoStore, JsonNode.class);
 
-        EventInfoStore actualEventInfoStore = StateJsonConverter.deserializeEventsFromArrayNode(jsonNode.get("eventInfos"));
+        StimulusInfoStore actualStimulusInfoStore = StateJsonConverter.deserializeStimuliFromArrayNode(jsonNode.get("stimulusInfos"));
 
-        EventInfo expectedEventInfo = expectedEventInfoStore.getEventInfos().get(0);
-        EventInfo actualEventInfo = actualEventInfoStore.getEventInfos().get(0);
+        StimulusInfo expectedStimulusInfo = expectedStimulusInfoStore.getStimulusInfos().get(0);
+        StimulusInfo actualStimulusInfo = actualStimulusInfoStore.getStimulusInfos().get(0);
 
         double allowedDelta = 1e-3;
 
-        assertEquals(expectedEventInfo.getEventTimeframe().getStartTime(), actualEventInfo.getEventTimeframe().getStartTime(), allowedDelta);
-        assertEquals(expectedEventInfo.getEventTimeframe().getEndTime(), actualEventInfo.getEventTimeframe().getEndTime(), allowedDelta);
-        assertEquals(expectedEventInfo.getEventTimeframe().isRepeat(), actualEventInfo.getEventTimeframe().isRepeat());
-        assertEquals(expectedEventInfo.getEventTimeframe().getWaitTimeBetweenRepetition(), actualEventInfo.getEventTimeframe().getWaitTimeBetweenRepetition(), allowedDelta);
+        assertEquals(expectedStimulusInfo.getTimeframe().getStartTime(), actualStimulusInfo.getTimeframe().getStartTime(), allowedDelta);
+        assertEquals(expectedStimulusInfo.getTimeframe().getEndTime(), actualStimulusInfo.getTimeframe().getEndTime(), allowedDelta);
+        assertEquals(expectedStimulusInfo.getTimeframe().isRepeat(), actualStimulusInfo.getTimeframe().isRepeat());
+        assertEquals(expectedStimulusInfo.getTimeframe().getWaitTimeBetweenRepetition(), actualStimulusInfo.getTimeframe().getWaitTimeBetweenRepetition(), allowedDelta);
+    }
+
+    @Test
+    public void getFloorFieldHashTest1(){
+        Topography topography = new Topography();
+        topography.addObstacle(new Obstacle(new AttributesObstacle(3, new VRectangle(1,1,3,3))));
+        AttributesFloorField attr = new AttributesFloorField();
+        attr.setCacheDir("some/cache/dir");
+        String hash1 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        // changes to cacheDir should not have any influence to the floor field hash
+        attr.setCacheDir("some/other/cache/dir");
+        String hash2 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        assertEquals("Hashes must match",hash1, hash2);
+    }
+
+    @Test
+    public void getFloorFieldHashTest2(){
+        Topography topography = new Topography();
+        topography.addObstacle(new Obstacle(new AttributesObstacle(3, new VRectangle(1,1,3,3))));
+        AttributesFloorField attr = new AttributesFloorField();
+        attr.setCacheDir("some/cache/dir");
+        String hash1 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        // changes to anything other thatn  cacheDir must change the floor field hash
+        attr.setObstacleGridPenalty(23.3);
+        String hash2 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        assertNotEquals("Hashes must differ",hash1, hash2);
+    }
+
+    @Test
+    public void getFloorFieldHashTest3(){
+        Topography topography = new Topography();
+        topography.addObstacle(new Obstacle(new AttributesObstacle(3, new VRectangle(1,1,3,3))));
+        AttributesFloorField attr = new AttributesFloorField();
+        attr.setCacheDir("some/cache/dir");
+        String hash1 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        // changes to anything other thatn  cacheDir must change the floor field hash
+        topography.addObstacle(new Obstacle(new AttributesObstacle(3, new VRectangle(3,3,1,1))));
+        String hash2 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        assertNotEquals("Hashes must differ",hash1, hash2);
+    }
+
+    @Test
+    public void getFloorFieldHashTestAttTarget(){
+        Topography topography = new Topography();
+        topography.addObstacle(new Obstacle(new AttributesObstacle(3, new VRectangle(1,1,3,3))));
+        AttributesFloorField attr = new AttributesFloorField();
+        AttributesTarget attrTarget = new AttributesTarget(new VRectangle(1,1,1,1));
+        Target t = new Target(attrTarget);
+        topography.addTarget(t);
+        String hash1 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        // changes must NOT change the floor field hash
+        attrTarget.setId(33);
+        attrTarget.setAbsorbing(false);
+        attrTarget.setWaitingTime(3);
+        attrTarget.setWaitingTimeYellowPhase(2);
+        attrTarget.setParallelWaiters(1);
+        attrTarget.setIndividualWaiting(false);
+        attrTarget.setDeletionDistance(0.4);
+        attrTarget.setStartingWithRedLight(true);
+        attrTarget.setNextSpeed(1);
+        String hash2 = StateJsonConverter.getFloorFieldHash(topography, attr);
+
+        assertEquals("Hashes must differ",hash1, hash2);
+
+        // changes must change the floor field hash
+        attrTarget.setShape(new VRectangle(2,2,2,2));
+        String hash3 = StateJsonConverter.getFloorFieldHash(topography, attr);
+        assertNotEquals("Hashes must differ",hash1, hash3);
     }
 
     @Test

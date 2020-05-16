@@ -1,18 +1,18 @@
 package org.vadere.meshing.mesh.inter;
 
 import org.apache.commons.lang3.tuple.Triple;
+import org.jetbrains.annotations.NotNull;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VTriangle;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
  * A {@link ITriangulation} is a set of connected triangles.
- *
- * @param <P> the type of the points of the triangles
  */
-public interface ITriangulation<P extends IPoint> {
+public interface ITriangulation<V extends IVertex, E extends IHalfEdge, F extends IFace> {
 
 	/**
 	 * Returns a {@link Stream} of {@link VTriangle} which represent the triangles of this triangulation.
@@ -27,16 +27,21 @@ public interface ITriangulation<P extends IPoint> {
 	}
 
 	/**
-	 * Returns a {@link Stream} of {@link Triple} of {@link P} which represent the triangles of this triangulation.
+	 * Returns a {@link Stream} of {@link Triple} of {@link IPoint} which represent the triangles of this triangulation.
 	 *
-	 * @return a {@link Stream} of {@link Triple} of {@link P}
+	 * @return a {@link Stream} of {@link Triple} of {@link IPoint}
 	 */
-	Stream<Triple<P, P, P>> streamTriples();
+	Stream<Triple<IPoint, IPoint, IPoint>> streamTriples();
 
 	/**
-	 * Returns a {@link Stream} of {@link P} which are the points of the triangulation.
+	 * Returns a {@link Stream} of {@link IPoint} which are the points of the triangulation.
 	 *
-	 * @return a {@link Stream} of {@link P} which are the points of the triangulation.
+	 * @return a {@link Stream} of {@link IPoint} which are the points of the triangulation.
 	 */
-	Stream<P> streamPoints();
+	Stream<IPoint> streamPoints();
+
+
+	Optional<F> locateFace(final IPoint point);
+
+	Optional<F> locateFace(@NotNull final IPoint point, final Object caller);
 }

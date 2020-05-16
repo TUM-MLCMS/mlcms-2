@@ -39,8 +39,9 @@ public class ScenarioPanel extends JPanel implements IProjectChangeListener, Pro
 	private List<JMenu> menusInTabs = new ArrayList<>();
 	private TextView attributesSimulationView; // Simulation tab
 	private TextView attributesModelView; // Model tab
+	private TextView attributesPsychologyView; // Psychology tab
 	private TextView topographyFileView; // Topography tab
-	private TextView eventFileView; // Event tab
+	private TextView perceptionFileView; // Stimulus tab
 	private DataProcessingView dataProcessingGUIview; // DataProcessing
 	private TopographyWindow topographyCreatorView; // Topography creator tab... OR:
 	private final PostvisualizationWindow postVisualizationView; // Post-Visualization tab, replaces Topography tab if output is selected
@@ -106,13 +107,12 @@ public class ScenarioPanel extends JPanel implements IProjectChangeListener, Pro
 
 		//Tab
 		attributesSimulationView =
-				new TextView("/attributes", "default_directory_attributes", AttributeType.SIMULATION);
+				new TextView("ProjectView.defaultDirectoryAttributes", AttributeType.SIMULATION);
 		attributesSimulationView.setScenarioChecker(model);
-
 		tabbedPane.addTab(Messages.getString("Tab.Simulation.title"), attributesSimulationView);
 
 		//Tab
-		attributesModelView = new TextView("/attributes", "default_directory_attributes", AttributeType.MODEL);
+		attributesModelView = new TextView("ProjectView.defaultDirectoryAttributes", AttributeType.MODEL);
 		attributesModelView.setScenarioChecker(model);
 
 		JMenuBar presetMenuBar = new JMenuBar();
@@ -192,13 +192,18 @@ public class ScenarioPanel extends JPanel implements IProjectChangeListener, Pro
 		attributesModelView.getPanelTop().add(presetMenuBar, 0); // the 0 puts it at the leftmost position instead of the rightmost
 		tabbedPane.addTab(Messages.getString("Tab.Model.title"), attributesModelView);
 
-		topographyFileView = new TextView("/scenarios", "default_directory_scenarios", AttributeType.TOPOGRAPHY);
+		attributesPsychologyView =
+				new TextView("ProjectView.defaultDirectoryAttributes", AttributeType.PSYCHOLOGY);
+		attributesPsychologyView.isEditable(true);
+		tabbedPane.addTab(Messages.getString("Tab.Psychology.title"), attributesPsychologyView);
+
+		topographyFileView = new TextView("ProjectView.defaultDirectoryScenarios", AttributeType.TOPOGRAPHY);
 		topographyFileView.setScenarioChecker(model);
 		tabbedPane.addTab(Messages.getString("Tab.Topography.title"), topographyFileView);
 
-		eventFileView = new TextView("/attributes", "default_directory_attributes", AttributeType.EVENT);
-		eventFileView.isEditable(true);
-		tabbedPane.addTab(Messages.getString("Tab.Event.title"), eventFileView);
+		perceptionFileView = new TextView( "ProjectView.defaultDirectoryAttributes", AttributeType.PERCEPTION);
+		perceptionFileView.isEditable(true);
+		tabbedPane.addTab(Messages.getString("Tab.Perception.title"), perceptionFileView);
 
 		dataProcessingGUIview = new DataProcessingView(model);
 		tabbedPane.addTab(Messages.getString("Tab.OutputProcessors.title"), dataProcessingGUIview);
@@ -219,7 +224,9 @@ public class ScenarioPanel extends JPanel implements IProjectChangeListener, Pro
 	public void showVisualization() {
 		CardLayout cl = (CardLayout) this.getLayout();
 		cl.show(this, visualizationCardName);
-		onlineVisualization.getMainPanel().setVisible(true);
+		// [issue 280] set visibility and remove mouse listeners during setup. Will be added
+		// after setup of simulation run is complete.
+		onlineVisualization.showVisualization();
 	}
 
 	public void showEditScenario() {
@@ -276,17 +283,20 @@ public class ScenarioPanel extends JPanel implements IProjectChangeListener, Pro
 			postVisualizationView.getDefaultModel().resetTopographySize();
 		}
 
+		this.attributesSimulationView.setVadereScenario(scenario);
+		this.attributesSimulationView.isEditable(isEditable);
+
 		this.attributesModelView.setVadereScenario(scenario);
 		this.attributesModelView.isEditable(isEditable);
 
-		this.attributesSimulationView.setVadereScenario(scenario);
-		this.attributesSimulationView.isEditable(isEditable);
+		this.attributesPsychologyView.setVadereScenario(scenario);
+		this.attributesPsychologyView.isEditable(isEditable);
 
 		this.topographyFileView.setVadereScenario(scenario);
 		this.topographyFileView.isEditable(isEditable);
 
-		this.eventFileView.setVadereScenario(scenario);
-		this.eventFileView.isEditable(isEditable);
+		this.perceptionFileView.setVadereScenario(scenario);
+		this.perceptionFileView.isEditable(isEditable);
 
 		this.dataProcessingGUIview.setVadereScenario(scenario);
 		this.dataProcessingGUIview.isEditable(isEditable);

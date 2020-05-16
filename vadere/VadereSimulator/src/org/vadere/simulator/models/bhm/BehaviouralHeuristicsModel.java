@@ -1,23 +1,16 @@
 package org.vadere.simulator.models.bhm;
 
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Random;
-
 import org.jetbrains.annotations.NotNull;
 import org.vadere.annotation.factories.models.ModelClass;
 import org.vadere.simulator.models.MainModel;
 import org.vadere.simulator.models.Model;
-import org.vadere.simulator.models.osm.PedestrianOSM;
 import org.vadere.simulator.models.potential.fields.IPotentialFieldTarget;
 import org.vadere.simulator.models.potential.fields.IPotentialFieldTargetGrid;
 import org.vadere.simulator.models.potential.fields.PotentialFieldTargetGrid;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.exceptions.AttributesNotFoundException;
 import org.vadere.state.attributes.models.AttributesBHM;
-import org.vadere.state.attributes.models.AttributesFloorField;
 import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.DynamicElement;
 import org.vadere.state.scenario.Pedestrian;
@@ -26,6 +19,12 @@ import org.vadere.state.scenario.Topography;
 import org.vadere.util.geometry.shapes.VCircle;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VShape;
+
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Random;
 
 @ModelClass(isMainModel = true)
 public class BehaviouralHeuristicsModel implements MainModel {
@@ -65,12 +64,12 @@ public class BehaviouralHeuristicsModel implements MainModel {
 	}
 
 	@Override
-	public void initialize(List<Attributes> modelAttributesList, Topography topography,
-			AttributesAgent attributesPedestrian, Random random) {
+	public void initialize(List<Attributes> modelAttributesList, Domain domain,
+	                       AttributesAgent attributesPedestrian, Random random) {
 
 		try {
 			potentialFieldTarget = IPotentialFieldTargetGrid.createPotentialField(
-					modelAttributesList, topography, attributesPedestrian, PotentialFieldTargetGrid.class.getCanonicalName());
+					modelAttributesList, domain, attributesPedestrian, PotentialFieldTargetGrid.class.getCanonicalName());
 			this.models.add(potentialFieldTarget);
 		} catch (AttributesNotFoundException e) {
 			potentialFieldTarget = null;
@@ -78,18 +77,26 @@ public class BehaviouralHeuristicsModel implements MainModel {
 
 		this.attributesBHM = Model.findAttributes(modelAttributesList, AttributesBHM.class);
 		this.attributesPedestrian = attributesPedestrian;
-		this.topography = topography;
+		this.topography = domain.getTopography();
 		this.random = random;
 		this.models.add(this);
 	}
 
 	@Override
 	public <T extends DynamicElement> PedestrianBHM createElement(VPoint position, int id, Class<T> type) {
+		return createElement(position, id, this.attributesPedestrian, type);
+	}
+
+	@Override
+	public <T extends DynamicElement> PedestrianBHM createElement(VPoint position, int id, Attributes attr, Class<T> type) {
+
+		AttributesAgent aAttr = (AttributesAgent)attr;
+
 		if (!Pedestrian.class.isAssignableFrom(type))
 			throw new IllegalArgumentException("BHM cannot initialize " + type.getCanonicalName());
 
 		AttributesAgent pedAttributes = new AttributesAgent(
-				this.attributesPedestrian, registerDynamicElementId(topography, id));
+				aAttr, registerDynamicElementId(topography, id));
 
 		PedestrianBHM pedestrian = createElement(position, pedAttributes);
 		pedestrian.setPosition(position);

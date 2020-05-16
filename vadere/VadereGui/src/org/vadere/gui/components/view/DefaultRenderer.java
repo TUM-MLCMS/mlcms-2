@@ -4,11 +4,10 @@ import org.jetbrains.annotations.NotNull;
 import org.vadere.gui.components.model.IDefaultModel;
 import org.vadere.meshing.mesh.gen.MeshRenderer;
 import org.vadere.meshing.mesh.inter.IMesh;
-import org.vadere.state.scenario.Agent;
-import org.vadere.state.scenario.MeasurementArea;
-import org.vadere.state.scenario.ScenarioElement;
-import org.vadere.state.scenario.Stairs;
-import org.vadere.util.data.cellgrid.IPotentialPoint;
+import org.vadere.state.psychology.cognition.GroupMembership;
+import org.vadere.state.scenario.*;
+import org.vadere.util.config.VadereConfig;
+import org.vadere.util.geometry.shapes.VShape;
 import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.geometry.shapes.VCircle;
 import org.vadere.util.geometry.shapes.VLine;
@@ -40,6 +39,8 @@ public abstract class DefaultRenderer {
 	private IDefaultModel defaultModel;
 	private BufferedImage logo;
 	private static final double rotNeg90 = - Math.PI /2;
+	private boolean renderNodes = VadereConfig.getConfig().getBoolean("Gui.showNodes");
+	private double nodeRadius = VadereConfig.getConfig().getDouble("Gui.node.radius");
 
 	/**
 	 * <p>Default constructor.</p>
@@ -59,37 +60,47 @@ public abstract class DefaultRenderer {
 	 * @param height
 	 */
 	public void render(final Graphics2D targetGraphics2D, final int width, final int height) {
-		render(targetGraphics2D, 0, 0, width, height);
+		synchronized (defaultModel) {
+			render(targetGraphics2D, 0, 0, width, height);
+		}
 	}
 
 	public void render(final Graphics2D targetGraphics2D, final int x, final int y, final int width, final int height) {
-		targetGraphics2D.drawImage(renderImage(width, height), x, y, null);
-		targetGraphics2D.dispose();
+		synchronized (defaultModel) {
+			if (defaultModel.getTopographyBound() != null){
+				targetGraphics2D.drawImage(renderImage(width, height), x, y, null);
+			}
+			targetGraphics2D.dispose();
+		}
 	}
 
 	public void renderGraphics(final Graphics2D targetGraphics2D, final int width, final int height) {
-		targetGraphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		synchronized (defaultModel) {
+			targetGraphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		// (1) clear background
-		targetGraphics2D.setColor(Color.GRAY);
-		//targetGraphics2D.fill();
-		targetGraphics2D.fillRect(0, 0, width, height);
+			// (1) clear background
+			targetGraphics2D.setColor(Color.GRAY);
+			//targetGraphics2D.fill();
+			targetGraphics2D.fillRect(0, 0, width, height);
 
-		// (2) render everything which can be rendered before the transformation
-		renderPreTransformation(targetGraphics2D, width, height);
+			// (2) render everything which can be rendered before the transformation
+			renderPreTransformation(targetGraphics2D, width, height);
 
-		// (3)
-		transformGraphics(targetGraphics2D);
+			// (3)
+			transformGraphics(targetGraphics2D);
 
-		// (4) render everything which can be rendered after the transformation
-		renderPostTransformation(targetGraphics2D, width, height);
+			// (4) render everything which can be rendered after the transformation
+			renderPostTransformation(targetGraphics2D, width, height);
+		}
 	}
 
 	public BufferedImage renderImage(final int width, final int height) {
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		Graphics2D bufferGraphics2D = (Graphics2D) image.getGraphics();
-		renderGraphics(bufferGraphics2D, width, height);
-		return image;
+		synchronized (defaultModel) {
+			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+			Graphics2D bufferGraphics2D = (Graphics2D) image.getGraphics();
+			renderGraphics(bufferGraphics2D, width, height);
+			return image;
+		}
 	}
 
 	public void setLogo(final BufferedImage logo) {
@@ -99,42 +110,55 @@ public abstract class DefaultRenderer {
 	protected void renderPreTransformation(final Graphics2D graphics2D, final int width, final int height) {}
 
 	protected void renderPostTransformation(final Graphics2D graphics2D, final int width, final int height) {
-		graphics2D.setColor(Color.WHITE);
-		Rectangle2D.Double topographyBound = defaultModel.getTopographyBound();
-		fill(new VRectangle(
-				topographyBound.getMinX() + defaultModel.getBoundingBoxWidth(),
-				topographyBound.getMinY() + defaultModel.getBoundingBoxWidth(),
-				(defaultModel.getTopographyBound().getWidth() - defaultModel.getBoundingBoxWidth() * 2),
-				(defaultModel.getTopographyBound().getHeight() - defaultModel.getBoundingBoxWidth() * 2)), graphics2D);
+		synchronized (defaultModel) {
+			graphics2D.setColor(Color.WHITE);
+			Rectangle2D.Double topographyBound = defaultModel.getTopographyBound();
 
+			// Maybe, the simulation thread has not populated all required data yet,
+			// but the rendering process has already been triggered.
+			if (topographyBound != null) {
+				fill(new VRectangle(
+						topographyBound.getMinX() + defaultModel.getBoundingBoxWidth(),
+						topographyBound.getMinY() + defaultModel.getBoundingBoxWidth(),
+						(topographyBound.getWidth() - defaultModel.getBoundingBoxWidth() * 2),
+						(topographyBound.getHeight() - defaultModel.getBoundingBoxWidth() * 2)), graphics2D);
+			}
+		}
 	}
 
 	protected void transformGraphics(final Graphics2D graphics2D) {
-		Rectangle2D.Double topographyBound = defaultModel.getTopographyBound();
-		mirrowHorizonzal(graphics2D, (int) (topographyBound.getHeight() * defaultModel.getScaleFactor()));
-		graphics2D.scale(defaultModel.getScaleFactor(), defaultModel.getScaleFactor());
+		synchronized (defaultModel) {
+			Rectangle2D.Double topographyBound = defaultModel.getTopographyBound();
+			Rectangle2D.Double viewportBound = defaultModel.getViewportBound();
 
+			// Maybe, the simulation thread has not populated all required data yet,
+			// but the rendering process has already been triggered.
+			if (topographyBound != null && viewportBound != null) {
+				mirrowHorizonzal(graphics2D, (int) (topographyBound.getHeight() * defaultModel.getScaleFactor()));
+				graphics2D.scale(defaultModel.getScaleFactor(), defaultModel.getScaleFactor());
 
-		//graphics2D.translate(-topographyBound.getMinX(), -topographyBound.getMinY());
+				// We need this calculation because maybe the viewport.y = 0 (i.e., the user scrolled to the bottom)
+				double dy = topographyBound.getHeight() - viewportBound.getHeight();
 
-		/*
-		 * This calculation we need since the viewport.y = 0 if the user scrolls to the bottom
-		 */
-		Rectangle2D.Double viewportBound = defaultModel.getViewportBound();
-		double dy = topographyBound.getHeight() - viewportBound.getHeight();
-
-		graphics2D.translate(-viewportBound.getX(), Math.max((dy - viewportBound.getY()), - viewportBound.getY()));
-		// graphics2D.translate(+viewportBound.getX(), -Math.max((dy - viewportBound.getY()), 0));
-
+				graphics2D.translate(-viewportBound.getX(), Math.max((dy - viewportBound.getY()), - viewportBound.getY()));
+			}
+		}
 	}
 
 	protected void renderScenarioElement(final Iterable<? extends ScenarioElement> elements, final Graphics2D g,
 			final Color color) {
 		final Color tmpColor = g.getColor();
-		g.setColor(color);
 
 		for (ScenarioElement element : elements) {
-			fill(element.getShape(), g);
+			VShape shape = element.getShape();
+			g.setColor(color);
+			fill(shape, g);
+			if(renderNodes) {
+				for(VPoint node : shape.getPath()) {
+					g.setColor(Color.RED);
+					g.fill(new VCircle(node, nodeRadius));
+				}
+			}
 		}
 
 		g.setColor(tmpColor);
@@ -228,6 +252,12 @@ public abstract class DefaultRenderer {
 		final Color tmpColor = graphics.getColor();
 		graphics.setColor(color);
 		fill(element.getShape(), graphics);
+		if(renderNodes) {
+			for(VPoint node : element.getShape().getPath()) {
+				graphics.setColor(Color.RED);
+				graphics.fill(new VCircle(node, nodeRadius));
+			}
+		}
 		graphics.setColor(tmpColor);
 	}
 
@@ -268,30 +298,36 @@ public abstract class DefaultRenderer {
 	}
 
 	protected void renderLogo(final Graphics2D graphics, double scale, double height) {
-		/*
-		 * This calculation we need since the viewport.y = 0 if the user scrolls to the bottom
-		 */
-		double dy = defaultModel.getTopographyBound().getHeight() - defaultModel.getViewportBound().getHeight();
+		Rectangle2D.Double topographyBound = defaultModel.getTopographyBound();
+		Rectangle2D.Double viewportBound = defaultModel.getViewportBound();
 
-		// undo the viewport translation
-		graphics.translate(defaultModel.getViewportBound().getX(),
-				-Math.max((dy - defaultModel.getViewportBound().getY()), -defaultModel.getViewportBound().getY()));
-		graphics.scale(1.0 / scale, 1.0 / scale);
-		graphics.translate(0, +defaultModel.getTopographyBound().getHeight() * defaultModel.getScaleFactor());
-		graphics.scale(1.0, -1.0);
+		// Maybe, the simulation thread has not populated all required data yet,
+		// but the rendering process has already been triggered.
+		if (topographyBound != null && viewportBound != null) {
+			// We need this calculation because maybe the viewport.y = 0 (i.e., the user scrolled to the bottom)
+			double dy = topographyBound.getHeight() - viewportBound.getHeight();
 
-		graphics.translate(0, 2.0);
-		graphics.scale(0.25, 0.25);
 
-		graphics.drawImage(logo, 0, 0, null);
+			// undo the viewport translation
+			graphics.translate(viewportBound.getX(),
+					-Math.max((dy - viewportBound.getY()), -viewportBound.getY()));
+			graphics.scale(1.0 / scale, 1.0 / scale);
+			graphics.translate(0, +topographyBound.getHeight() * defaultModel.getScaleFactor());
+			graphics.scale(1.0, -1.0);
 
-		// undo all scaling and translation
-		graphics.scale(1.0/0.25, 1.0/0.25);
-		graphics.translate(0, 1.0/2.0);
-		graphics.scale(1.0, -1.0);
-		graphics.translate(0, -defaultModel.getTopographyBound().getHeight() * defaultModel.getScaleFactor());
-		graphics.translate(-defaultModel.getViewportBound().getX(),
-				Math.max((dy - defaultModel.getViewportBound().getY()), -defaultModel.getViewportBound().getY()));
+			graphics.translate(0, 2.0);
+			graphics.scale(0.25, 0.25);
+
+			graphics.drawImage(logo, 0, 0, null);
+
+			// undo all scaling and translation
+			graphics.scale(1.0 / 0.25, 1.0 / 0.25);
+			graphics.translate(0, 1.0 / 2.0);
+			graphics.scale(1.0, -1.0);
+			graphics.translate(0, -topographyBound.getHeight() * defaultModel.getScaleFactor());
+			graphics.translate(-viewportBound.getX(),
+					Math.max((dy - viewportBound.getY()), -viewportBound.getY()));
+		}
 	}
 
 	protected boolean hasLogo() {
@@ -321,6 +357,13 @@ public abstract class DefaultRenderer {
 		g.setColor(c);
 	}
 
+	protected void renderPedestrianInOutGroup(final Graphics2D g, Pedestrian pedestrian) {
+		Color groupMembershipColor = defaultModel.getConfig().getGroupMembershipColor(pedestrian.getGroupMembership());
+		g.setColor(groupMembershipColor);
+		g.setStroke(new BasicStroke(getSelectedShapeBorderLineWidth()));
+		draw(pedestrian.getShape(), g);
+	}
+
 
 	protected static void drawArrow(Graphics2D g2, double theta, double x0, double y0) {
 		float barb = 0.3f;
@@ -342,16 +385,21 @@ public abstract class DefaultRenderer {
 		g.setColor(Color.LIGHT_GRAY);
 		g.setStroke(new BasicStroke(getGridLineWidth()));
 		Rectangle2D.Double bound = defaultModel.getTopographyBound();
-		for (double y = bound.getMinY(); y <= bound.getMaxY() + 0.01; y +=
-				defaultModel.getGridResolution()) {
-			for (double x = bound.getMinX(); x <= bound.getMaxX() + 0.01; x +=
+
+		// Maybe, the simulation thread has not populated all required data yet,
+		// but the rendering process has already been triggered.
+		if (bound != null) {
+			for (double y = bound.getMinY(); y <= bound.getMaxY() + 0.01; y +=
 					defaultModel.getGridResolution()) {
-				draw(new Line2D.Double(x - defaultModel.getGridResolution() * 0.2, y,
-						x + defaultModel.getGridResolution()
-								* 0.2, y), g);
-				draw(new Line2D.Double(x, y - defaultModel.getGridResolution() * 0.2, x,
-						y + defaultModel.getGridResolution()
-								* 0.2), g);
+				for (double x = bound.getMinX(); x <= bound.getMaxX() + 0.01; x +=
+						defaultModel.getGridResolution()) {
+					draw(new Line2D.Double(x - defaultModel.getGridResolution() * 0.2, y,
+							x + defaultModel.getGridResolution()
+									* 0.2, y), g);
+					draw(new Line2D.Double(x, y - defaultModel.getGridResolution() * 0.2, x,
+							y + defaultModel.getGridResolution()
+									* 0.2), g);
+				}
 			}
 		}
 	}
@@ -623,10 +671,10 @@ public abstract class DefaultRenderer {
 
 	protected void renderMesh(
 			@NotNull final Graphics2D g,
-			@NotNull final IMesh<? extends IPotentialPoint, ?, ?, ?> mesh,
+			@NotNull final IMesh<?, ?, ?> mesh,
 			@NotNull final VRectangle bound) {
-		MeshRenderer<? extends IPotentialPoint, ?, ?, ?> meshRenderer = new MeshRenderer<>(mesh);
-		meshRenderer.renderGraphics(g, bound);
+		MeshRenderer<?, ?, ?> meshRenderer = new MeshRenderer<>(mesh);
+		//meshRenderer.renderGraphics(g, bound);
 	}
 
 	protected void renderVoronoiDiagram(final Graphics2D g, final VoronoiDiagram voronoiDiagram) {

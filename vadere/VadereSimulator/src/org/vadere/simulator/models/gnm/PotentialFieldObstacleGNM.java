@@ -1,24 +1,25 @@
 package org.vadere.simulator.models.gnm;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-
 import org.vadere.annotation.factories.models.ModelClass;
 import org.vadere.simulator.models.Model;
 import org.vadere.simulator.models.potential.fields.PotentialFieldObstacle;
+import org.vadere.simulator.models.potential.solver.gradients.GradientProvider;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesPotentialGNM;
 import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.Agent;
 import org.vadere.state.scenario.Obstacle;
 import org.vadere.state.scenario.Topography;
-import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.geometry.shapes.VPoint;
+import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.math.MathUtil;
-import org.vadere.simulator.models.potential.solver.gradients.GradientProvider;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Provides gradients for obstcles in a continous manner. The gradient is
@@ -31,7 +32,7 @@ public class PotentialFieldObstacleGNM implements GradientProvider, PotentialFie
 
 	private Collection<Obstacle> obstacles;
 
-	private Topography topography;
+	private Domain domain;
 
 	private double epsDV = 1e-10;
 
@@ -40,11 +41,11 @@ public class PotentialFieldObstacleGNM implements GradientProvider, PotentialFie
 	public PotentialFieldObstacleGNM() {}
 
 	@Override
-	public void initialize(List<Attributes> attributesList, Topography topography,
+	public void initialize(List<Attributes> attributesList, Domain domain,
 	                       AttributesAgent attributesPedestrian, Random random) {
 		this.attributesPotential = Model.findAttributes(attributesList, AttributesPotentialGNM.class);
-		this.obstacles = topography.getObstacles();
-		this.topography = topography;
+		this.obstacles = domain.getTopography().getObstacles();
+		this.domain = domain;
 	}
 
 	@Override
@@ -129,7 +130,7 @@ public class PotentialFieldObstacleGNM implements GradientProvider, PotentialFie
 	public PotentialFieldObstacle copy() {
 		PotentialFieldObstacleGNM potentialFieldObstacleGNM = new PotentialFieldObstacleGNM();
 		potentialFieldObstacleGNM.attributesPotential = attributesPotential;
-		potentialFieldObstacleGNM.obstacles = new LinkedList<>(topography.getObstacles());
+		potentialFieldObstacleGNM.obstacles = new LinkedList<>(domain.getTopography().getObstacles());
 		return potentialFieldObstacleGNM;
 	}
 

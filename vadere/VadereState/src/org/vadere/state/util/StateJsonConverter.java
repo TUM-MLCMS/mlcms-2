@@ -12,11 +12,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vadere.state.attributes.Attributes;
+import org.vadere.state.attributes.AttributesPsychology;
 import org.vadere.state.attributes.AttributesSimulation;
 import org.vadere.state.attributes.ModelDefinition;
+import org.vadere.state.attributes.models.AttributesFloorField;
 import org.vadere.state.attributes.scenario.*;
-import org.vadere.state.events.json.EventInfo;
-import org.vadere.state.events.json.EventInfoStore;
+import org.vadere.state.psychology.perception.json.StimulusInfo;
+import org.vadere.state.psychology.perception.json.StimulusInfoStore;
 import org.vadere.state.scenario.*;
 import org.vadere.state.types.ScenarioElementType;
 import org.vadere.util.logging.Logger;
@@ -24,11 +26,13 @@ import org.vadere.util.reflection.DynamicClassInstantiator;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class StateJsonConverter {
 
@@ -57,16 +61,10 @@ public abstract class StateJsonConverter {
 		return prettyWriter;
 	}
 
-	// TODO handle exception
-	public static <T> T deserializeObjectFromJson(String json, Class<T> objectClass) {
-		
-		try {
-			final JsonNode node = mapper.readTree(json);
-			checkForTextOutOfNode(json);
-			return mapper.treeToValue(node, objectClass);
-		} catch (TextOutOfNodeException | IOException e) {
-			throw new RuntimeException(e);
-		}
+	public static <T> T deserializeObjectFromJson(String json, Class<T> objectClass) throws IOException {
+		final JsonNode node = mapper.readTree(json);
+		checkForTextOutOfNode(json);
+		return mapper.treeToValue(node, objectClass);
 	}
 
 	public static <T> T deserializeObjectFromJson(String json, final TypeReference<T> type) {
@@ -106,6 +104,7 @@ public abstract class StateJsonConverter {
 		Collection<AttributesObstacle> obstacles = new LinkedList<>();
 		Collection<AttributesStairs> stairs = new LinkedList<>();
 		Collection<AttributesTarget> targets = new LinkedList<>();
+		Collection<AttributesTargetChanger> targetChangers = new LinkedList<>();
 		Collection<AttributesAbsorbingArea> absorbingAreas = new LinkedList<>();
 		Collection<AttributesSource> sources = new LinkedList<>();
 		Collection<AttributesMeasurementArea> measurementAreas = new LinkedList<>();
@@ -113,7 +112,7 @@ public abstract class StateJsonConverter {
 		AttributesTeleporter teleporter = null;
 	}
 
-	public static AttributesSimulation deserializeAttributesSimulation(String json) {
+	public static AttributesSimulation deserializeAttributesSimulation(String json) throws IOException  {
 		return deserializeObjectFromJson(json, AttributesSimulation.class);
 	}
 
@@ -122,7 +121,14 @@ public abstract class StateJsonConverter {
 		return mapper.treeToValue(node, AttributesSimulation.class);
 	}
 
-	
+	public static AttributesPsychology deserializeAttributesPsychology(String json) throws IOException  {
+		return deserializeObjectFromJson(json, AttributesPsychology.class);
+	}
+
+	public static AttributesPsychology deserializeAttributesPsychologyFromNode(JsonNode node)
+			throws JsonProcessingException {
+		return mapper.treeToValue(node, AttributesPsychology.class);
+	}
 
 	public static List<Attributes> deserializeAttributesListFromNode(JsonNode node) throws JsonProcessingException {
 		DynamicClassInstantiator<Attributes> instantiator = new DynamicClassInstantiator<>();
@@ -136,7 +142,7 @@ public abstract class StateJsonConverter {
 		return attributesList;
 	}
 
-	public static Topography deserializeTopography(String json) throws IOException, TextOutOfNodeException {
+	public static Topography deserializeTopography(String json) throws IOException {
 		checkForTextOutOfNode(json);
 		return deserializeTopographyFromNode(mapper.readTree(json));
 	}
@@ -147,16 +153,21 @@ public abstract class StateJsonConverter {
 		store.obstacles.forEach(obstacle -> topography.addObstacle(new Obstacle(obstacle)));
 		store.stairs.forEach(stairs -> topography.addStairs(new Stairs(stairs)));
 		store.targets.forEach(target -> topography.addTarget(new Target(target)));
+		store.targetChangers.forEach(targetChanger -> topography.addTargetChanger(new TargetChanger(targetChanger)));
 		store.absorbingAreas.forEach(absorbingArea -> topography.addAbsorbingArea(new AbsorbingArea(absorbingArea)));
 		store.sources.forEach(source -> topography.addSource(new Source(source)));
 		store.measurementAreas.forEach(area -> topography.addMeasurementArea(new MeasurementArea(area)));
+
 		store.dynamicElements.forEach(topography::addInitialElement);
+
 		if (store.teleporter != null)
 			topography.setTeleporter(new Teleporter(store.teleporter));
+
 		return topography;
 	}
 
-	public static void checkForTextOutOfNode(String json) throws TextOutOfNodeException, IOException { // via stackoverflow.com/a/26026359
+	public static void checkForTextOutOfNode(String json) throws IOException {
+		// via stackoverflow.com/a/26026359
 		JsonParser jp = mapper.getFactory().createParser(json);
 		mapper.readValue(jp, JsonNode.class);
 		try {
@@ -170,25 +181,25 @@ public abstract class StateJsonConverter {
 	}
 
 	/**
-	 * Pass a node representing an array of @see EventInfo objects.
+	 * Pass a node representing an array of @see StimulusInfo objects.
 	 *
 	 * Usually, this array is extracted by reading in a scenario file as @see JsonNode
-	 * an you call "get("eventInfos") on this @see JsonNode.
+	 * and you call "get("stimulusInfos") on this @see JsonNode.
 	 */
-	public static EventInfoStore deserializeEventsFromArrayNode(JsonNode node) throws IllegalArgumentException {
-		EventInfoStore eventInfoStore = new EventInfoStore();
+	public static StimulusInfoStore deserializeStimuliFromArrayNode(JsonNode node) throws IllegalArgumentException {
+		StimulusInfoStore stimulusInfoStore = new StimulusInfoStore();
 
 		if (node != null) {
-			List<EventInfo> eventInfoList = new ArrayList<>();
-			node.forEach(eventInfoNode -> eventInfoList.add(mapper.convertValue(eventInfoNode, EventInfo.class)));
-			eventInfoStore.setEventInfos(eventInfoList);
+			List<StimulusInfo> stimulusInfoList = new ArrayList<>();
+			node.forEach(stimulusInfoNode -> stimulusInfoList.add(mapper.convertValue(stimulusInfoNode, StimulusInfo.class)));
+			stimulusInfoStore.setStimulusInfos(stimulusInfoList);
 		}
 
-		return eventInfoStore;
+		return stimulusInfoStore;
 	}
 
-	public static EventInfoStore deserializeEvents(String json) throws IOException {
-		return mapper.readValue(json, EventInfoStore.class);
+	public static StimulusInfoStore deserializeStimuli(String json) throws IOException {
+		return mapper.readValue(json, StimulusInfoStore.class);
 	}
 
 	public static Pedestrian deserializePedestrian(String json) throws IOException {
@@ -210,6 +221,8 @@ public abstract class StateJsonConverter {
 				return mapper.readValue(json, AttributesSource.class);
 			case TARGET:
 				return mapper.readValue(json, AttributesTarget.class);
+			case TARGET_CHANGER:
+				return mapper.readValue(json, AttributesTargetChanger.class);
 			case ABSORBING_AREA:
 				return mapper.readValue(json, AttributesAbsorbingArea.class);
 			case STAIRS:
@@ -238,6 +251,10 @@ public abstract class StateJsonConverter {
 		return prettyWriter.writeValueAsString(node);
 	}
 
+	public static ObjectNode serializeAttributesModelToNode(final Attributes... attributesList) {
+		return serializeAttributesModelToNode(Arrays.stream(attributesList).collect(Collectors.toList()));
+	}
+
 	public static ObjectNode serializeAttributesModelToNode(final List<Attributes> attributesList) {
 		List<Pair<String, Attributes>> attributePairList = attributesListToNameObjectPairList(attributesList);
 
@@ -248,6 +265,9 @@ public abstract class StateJsonConverter {
 		return attributesModelNode;
 	}
 
+	private static List<Pair<String, Attributes>> attributesListToNameObjectPairList(Attributes... attributesList) {
+		return attributesListToNameObjectPairList(Arrays.stream(attributesList).collect(Collectors.toList()));
+	}
 	private static List<Pair<String, Attributes>> attributesListToNameObjectPairList(List<Attributes> attributesList) {
 		List<Pair<String, Attributes>> list = new ArrayList<>(attributesList.size());
 		for (Attributes a : attributesList)
@@ -283,6 +303,11 @@ public abstract class StateJsonConverter {
 		topography.getTargets()
 				.forEach(target -> targetNodes.add(mapper.convertValue(target.getAttributes(), JsonNode.class)));
 		topographyNode.set("targets", targetNodes);
+
+		ArrayNode targetChangerNodes = mapper.createArrayNode();
+		topography.getTargetChangers()
+				.forEach(targetChanger -> targetChangerNodes.add(mapper.convertValue(targetChanger.getAttributes(), JsonNode.class)));
+		topographyNode.set("targetChangers", targetChangerNodes);
 
 		ArrayNode absorbingAreaNodes = mapper.createArrayNode();
 		topography.getAbsorbingAreas()
@@ -324,6 +349,11 @@ public abstract class StateJsonConverter {
 		return prettyWriter.writeValueAsString(mapper.convertValue(attributesSimulation, JsonNode.class));
 	}
 
+	public static String serializeAttributesPsychology(AttributesPsychology attributesPsychology)
+			throws JsonProcessingException {
+		return prettyWriter.writeValueAsString(mapper.convertValue(attributesPsychology, JsonNode.class));
+	}
+
 	public static String serializeTopography(Topography topography) throws JsonProcessingException {
 		return prettyWriter.writeValueAsString(serializeTopographyToNode(topography));
 	}
@@ -336,13 +366,13 @@ public abstract class StateJsonConverter {
 		return prettyWriter.writeValueAsString(node);
 	}
 
-	public static String serializeEvents(EventInfoStore eventInfoStore)
+	public static String serializeStimuli(StimulusInfoStore stimulusInfoStore)
 			throws JsonProcessingException {
-		return prettyWriter.writeValueAsString(mapper.convertValue(eventInfoStore, JsonNode.class));
+		return prettyWriter.writeValueAsString(mapper.convertValue(stimulusInfoStore, JsonNode.class));
 	}
 
-	public static ObjectNode serializeEventsToNode(EventInfoStore eventInfoStore) {
-		return mapper.valueToTree(eventInfoStore);
+	public static ObjectNode serializeStimuliToNode(StimulusInfoStore stimulusInfoStore) {
+		return mapper.valueToTree(stimulusInfoStore);
 	}
 
 	public static String serializeObjectPretty(Object object) {
@@ -353,7 +383,7 @@ public abstract class StateJsonConverter {
 		}
 	}
 
-	public static String serialidzeObject(Object object) {
+	public static String serializeObject(Object object) {
 		try {
 			return writer.writeValueAsString(mapper.convertValue(object, JsonNode.class));
 		} catch (JsonProcessingException | IllegalArgumentException e) {
@@ -363,7 +393,7 @@ public abstract class StateJsonConverter {
 
 	public static String getScenarioStoreHash(Object object){
 		JsonNode jsonNode = mapper.convertValue(object, JsonNode.class);
-		JsonNode attrSimulation = jsonNode.findPath("attributesSimulation");
+		JsonNode attrSimulation = jsonNode.findPath(AttributesSimulation.JSON_KEY);
 		if (! attrSimulation.isMissingNode()){
 			((ObjectNode)attrSimulation).remove("simulationSeed");
 			((ObjectNode)attrSimulation).remove("useFixedSeed");
@@ -414,5 +444,32 @@ public abstract class StateJsonConverter {
 	
 	public static String writeValueAsString(Object value) throws JsonProcessingException {
 		return prettyWriter.writeValueAsString(value);
+	}
+
+	/**
+	 * Create a SHA-1 hash based on the given {@link AttributesFloorField} and {@link Topography}.
+	 * Use the Jackson view {@link Views.CacheView} to EXCLUDE the @link AttributesFloorField#cacheDir
+	 * field to allow reallocation of created floor field caches.
+	 *
+	 */
+	public static String getFloorFieldHash(final Topography topography, final AttributesFloorField attr)  {
+		try {
+			String topographyStr = mapper
+									.writerWithDefaultPrettyPrinter()
+									.withView(Views.CacheView.class)
+									.writeValueAsString(topography);
+			String attrString = mapper
+									.writerWithDefaultPrettyPrinter()
+									.withView(Views.CacheView.class)
+									.writeValueAsString(attr);
+			String hashIt = attrString + "\n" + topographyStr;
+			String hash = DigestUtils.sha1Hex(hashIt.getBytes());
+			logger.debugf("created Hash: %s", hash);
+			logger.tracef("used String for hash: \n%s", hashIt);
+			return hash;
+		} catch (JsonProcessingException e) {
+			logger.error("cannot create hash of topography and floor field attributes for cache access.");
+		}
+		return DigestUtils.sha1Hex("error");
 	}
 }

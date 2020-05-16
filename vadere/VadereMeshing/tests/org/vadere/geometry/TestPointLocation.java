@@ -30,8 +30,8 @@ public class TestPointLocation {
 	private static PFace face2;
 	private static PFace border;
 	private static double EPSILON = 1.0e-6;
-	private IMesh<VPoint, PVertex<VPoint>, PHalfEdge<VPoint>, PFace<VPoint>> mesh;
-	private ITriConnectivity<VPoint, PVertex<VPoint>, PHalfEdge<VPoint>, PFace<VPoint>> triConnectivity;
+	private IMesh<PVertex, PHalfEdge, PFace> mesh;
+	private ITriConnectivity<PVertex, PHalfEdge, PFace> triConnectivity;
 
 	/**
 	 * Sets up a mesh consisting of 2 triangles and 1 border face.
@@ -40,15 +40,15 @@ public class TestPointLocation {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		mesh = new PMesh<>((x, y) -> new VPoint(x, y));
+		mesh = new PMesh();
 		face1 = mesh.createFace();
 		face2 = mesh.createFace();
 		border = mesh.getBorder();
 
-		PVertex<VPoint> x = mesh.insertVertex(0, 0);
-		PVertex<VPoint> y = mesh.insertVertex(1.5,3.0);
-		PVertex<VPoint> z = mesh.insertVertex(3.0,0);
-		PVertex<VPoint> w = mesh.insertVertex(4.5,3.0);
+		PVertex x = mesh.insertVertex(0, 0);
+		PVertex y = mesh.insertVertex(1.5,3.0);
+		PVertex z = mesh.insertVertex(3.0,0);
+		PVertex w = mesh.insertVertex(4.5,3.0);
 
 		PHalfEdge xy = mesh.createEdge(y, border);
 		mesh.setEdge(y, xy);
@@ -100,6 +100,11 @@ public class TestPointLocation {
 			}
 
 			@Override
+			public boolean isIllegal(@NotNull IHalfEdge edge, @NotNull IVertex p, double eps) {
+				return false;
+			}
+
+			@Override
 			public IHalfEdge insert(@NotNull IPoint point, @NotNull IFace face) {
 				return null;
 			}
@@ -110,7 +115,7 @@ public class TestPointLocation {
 			}
 
 			@Override
-			public IMesh<VPoint, PVertex<VPoint>, PHalfEdge<VPoint>, PFace<VPoint>> getMesh() {
+			public IMesh<PVertex, PHalfEdge, PFace> getMesh() {
 				return mesh;
 			}
 
@@ -123,31 +128,31 @@ public class TestPointLocation {
 
 	@Test
 	public void testDirectFaceLocation() {
-		assertEquals(face1, triConnectivity.locateFace(0, 0).get());
+		assertEquals(face1, triConnectivity.locate(0, 0).get());
 
-		assertEquals(face1, triConnectivity.locateFace(1.4,1.5).get());
+		assertEquals(face1, triConnectivity.locate(1.4,1.5).get());
 
-		assertEquals(face1, triConnectivity.locateFace(1.4,1.5).get());
+		assertEquals(face1, triConnectivity.locate(1.4,1.5).get());
 
-		assertEquals(border, triConnectivity.locateFace(1.4,3.5).get());
+		assertEquals(border, triConnectivity.locate(1.4,3.5).get());
 
-		assertEquals(border, triConnectivity.locateFace(-1.5,1.4).get());
+		assertEquals(border, triConnectivity.locate(-1.5,1.4).get());
 
-		assertEquals(face2, triConnectivity.locateFace(3.5,1.4).get());
+		assertEquals(face2, triConnectivity.locate(3.5,1.4).get());
 
-		assertEquals(border, triConnectivity.locateFace(3.5,0.2).get());
+		assertEquals(border, triConnectivity.locate(3.5,0.2).get());
 
-		assertEquals(face2, triConnectivity.locateFace(3.0,1.5).get());
+		assertEquals(face2, triConnectivity.locate(3.0,1.5).get());
 
-		assertEquals(face2, triConnectivity.locateFace(4.5,3.0).get());
+		assertEquals(face2, triConnectivity.locate(4.5,3.0).get());
 
-		assertEquals(face1, triConnectivity.locateFace(0, 0).get());
+		assertEquals(face1, triConnectivity.locate(0, 0).get());
 
-		assertEquals(face2, triConnectivity.locateFace(3.0, EPSILON).get());
+		assertEquals(face2, triConnectivity.locate(3.0, EPSILON).get());
 
-		assertEquals(face1, triConnectivity.locateFace(1.5,3.0 - EPSILON).get());
+		assertEquals(face1, triConnectivity.locate(1.5,3.0 - EPSILON).get());
 
-		assertEquals(border, triConnectivity.locateFace(1.5 - EPSILON,3.0 + EPSILON).get());
+		assertEquals(border, triConnectivity.locate(1.5 - EPSILON,3.0 + EPSILON).get());
 	}
 
 	@Test

@@ -1,29 +1,32 @@
 package org.vadere.gui.postvisualization.control;
 
 
+import org.apache.commons.configuration2.Configuration;
 import org.vadere.gui.components.control.simulation.ActionVisualization;
 import org.vadere.gui.components.utils.Messages;
-import org.vadere.gui.components.utils.Resources;
 import org.vadere.gui.components.view.DialogFactory;
-import org.vadere.gui.postvisualization.PostVisualisation;
 import org.vadere.gui.postvisualization.model.PostvisualizationModel;
 import org.vadere.simulator.projects.Scenario;
 import org.vadere.simulator.projects.io.IOOutput;
+import org.vadere.util.config.VadereConfig;
 import org.vadere.util.io.IOUtils;
 import org.vadere.util.logging.Logger;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
-
-import javax.swing.*;
+import java.util.stream.Collectors;
 
 public class ActionOpenFile extends ActionVisualization {
 	private static Logger logger = Logger.getLogger(ActionOpenFile.class);
-	private static Resources resources = Resources.getInstance("postvisualization");
+	private static final Configuration CONFIG = VadereConfig.getConfig();
+
 	private final PostvisualizationModel model;
 	private String path = null;
 
@@ -48,7 +51,7 @@ public class ActionOpenFile extends ActionVisualization {
 
 		File file = null;
 		if (path == null) {
-			String path = Preferences.userNodeForPackage(PostVisualisation.class).get("SettingsDialog.outputDirectory.path", "/");
+			String path = VadereConfig.getConfig().getString("SettingsDialog.outputDirectory.path", "/");
 
 			final JFileChooser fc = new JFileChooser(path);
 			int returnVal = fc.showOpenDialog(null);
@@ -62,14 +65,8 @@ public class ActionOpenFile extends ActionVisualization {
 		final File threadFile = file;
 
 		if (file != null) {
-			resources.setProperty("SettingsDialog.outputDirectory.path", file.getParent());
-			Preferences.userNodeForPackage(PostVisualisation.class).put("SettingsDialog.outputDirectory.path", file.getParent());
-			try {
-				IOUtils.saveUserPreferences(PostVisualisation.preferencesFilename,
-						Preferences.userNodeForPackage(PostVisualisation.class));
-			} catch (IOException | BackingStoreException e1) {
-				e1.printStackTrace();
-			}
+			CONFIG.setProperty("SettingsDialog.outputDirectory.path", file.getParent());
+			VadereConfig.getConfig().setProperty("SettingsDialog.outputDirectory.path", file.getParent());
 
 			Runnable runnable = () -> {
 				Player.getInstance(model).stop();
@@ -86,7 +83,7 @@ public class ActionOpenFile extends ActionVisualization {
 
 					if (trajectoryFile.isPresent() && snapshotFile.isPresent()) {
 						Scenario vadere = IOOutput.readScenario(snapshotFile.get().toPath());
-						model.init(IOOutput.readTrajectories(trajectoryFile.get().toPath(), vadere), vadere, trajectoryFile.get().getParent());
+						model.init(IOOutput.readTrajectories(trajectoryFile.get().toPath()), vadere, trajectoryFile.get().getParent());
 						model.notifyObservers();
 						dialog.dispose();
 						setLastDirectories(scenarioOutputDir);
@@ -119,29 +116,11 @@ public class ActionOpenFile extends ActionVisualization {
 		if (file == null || !file.isDirectory() || !file.exists()) {
 			throw new IllegalArgumentException("path is empty" + file);
 		}
-		String[] dirs =
-				Preferences.userNodeForPackage(PostVisualisation.class).get("recentlyOpenedFiles", "").split(",");
-		int maxSavedDirs = Integer.valueOf(resources.getProperty("PostVis.maxNumberOfSaveDirectories"));
+		int maxSavedDirs = CONFIG.getInt("PostVis.maxNumberOfSaveDirectories");
+		List<String> pathsList = VadereConfig.getConfig().getList(String.class, "recentlyOpenedFiles", new ArrayList<>());
+		pathsList.add(0, file.getAbsolutePath());
 
-		if (dirs != null) {
-			int i = 0;
-			String absPath = file.getAbsolutePath();
-			StringBuilder paths = new StringBuilder(absPath);
-			while (i < dirs.length && i < maxSavedDirs) {
-				if (!dirs[i].equals(absPath)) {
-					paths.append(",");
-					paths.append(dirs[i]);
-				}
-				i++;
-			}
-			Preferences.userNodeForPackage(PostVisualisation.class).put("recentlyOpenedFiles", paths.toString());
-
-			try {
-				IOUtils.saveUserPreferences(PostVisualisation.preferencesFilename,
-						Preferences.userNodeForPackage(PostVisualisation.class));
-			} catch (IOException | BackingStoreException e1) {
-				e1.printStackTrace();
-			}
-		}
+		pathsList = pathsList.stream().filter(entry -> Files.exists(Path.of(entry))).limit(maxSavedDirs).collect(Collectors.toList());
+		VadereConfig.getConfig().setProperty("recentlyOpenedFiles", pathsList);
 	}
 }

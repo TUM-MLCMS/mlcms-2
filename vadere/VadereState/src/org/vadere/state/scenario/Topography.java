@@ -1,8 +1,8 @@
 package org.vadere.state.scenario;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonView;
 
-import org.apache.commons.math3.analysis.function.Abs;
 import org.jetbrains.annotations.NotNull;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.scenario.AttributesAgent;
@@ -10,12 +10,17 @@ import org.vadere.state.attributes.scenario.AttributesCar;
 import org.vadere.state.attributes.scenario.AttributesDynamicElement;
 import org.vadere.state.attributes.scenario.AttributesObstacle;
 import org.vadere.state.attributes.scenario.AttributesTopography;
+import org.vadere.state.util.Views;
 import org.vadere.util.geometry.LinkedCellsGrid;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VPolygon;
 import org.vadere.util.geometry.shapes.VShape;
 import org.vadere.util.logging.Logger;
+import org.vadere.util.math.IDistanceFunction;
+import org.vadere.util.math.IDistanceFunctionCached;
+import org.vadere.util.random.IReachablePointProvider;
+import org.vadere.util.random.SimpleReachablePointProvider;
 
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
@@ -26,20 +31,24 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@JsonIgnoreProperties(value = {"allOtherAttributes", "obstacleDistanceFunction"})
+@JsonIgnoreProperties(value = {"allOtherAttributes", "obstacleDistanceFunction", "contextId", "reachablePointProvider"})
 public class Topography implements DynamicElementMover{
 
 	/** Transient to prevent JSON serialization. */
 	private static Logger logger = Logger.getLogger(Topography.class);
 
-	private Function<IPoint, Double> obstacleDistanceFunction;
-	
+	private IDistanceFunction obstacleDistanceFunction;
+	private IReachablePointProvider reachablePointProvider;
+
+	/** A possible empty string identifying a context object. */
+	private String contextId;
+
 	// TODO [priority=low] [task=feature] magic number, use attributes / parameter?
 	/**
 	 * Cell size of the internal storage of DynamicElements. Is used in the LinkedCellsGrid.
@@ -57,6 +66,7 @@ public class Topography implements DynamicElementMover{
 	 * Sources of scenario by id. Tree maps ensures same update order during
 	 * iteration between frames.
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private final List<Source> sources;
 	/**
 	 * Targets of scenario by id. Tree maps ensures same update order during
@@ -64,16 +74,21 @@ public class Topography implements DynamicElementMover{
 	 */
 	private final LinkedList<Target> targets;
 	/**
+	 * TargetChangers of scenario
+	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
+	private final LinkedList<TargetChanger> targetChangers;
+	/**
 	 * AbsorbingAreas of scenario by id. Tree maps ensures same update order during
 	 * iteration between frames.
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private final LinkedList<AbsorbingArea> absorbingAreas;
-
 	/**
 	 * MeasurementAreas.
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private final LinkedList<MeasurementArea> measurementAreas;
-
 	/**
 	 * List of obstacles used as a boundary for the whole topography.
 	 */
@@ -87,7 +102,9 @@ public class Topography implements DynamicElementMover{
 	private transient final DynamicElementContainer<Car> cars;
 	private boolean recomputeCells;
 
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private AttributesAgent attributesPedestrian;
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private AttributesCar attributesCar;
 
 	/** Used to get attributes of all scenario elements. */
@@ -121,6 +138,7 @@ public class Topography implements DynamicElementMover{
 		stairs = new LinkedList<>();
 		sources = new LinkedList<>();
 		targets = new LinkedList<>();
+		targetChangers = new LinkedList<>();
 		absorbingAreas = new LinkedList<>();
 		boundaryObstacles = new LinkedList<>();
 		measurementAreas = new LinkedList<>();
@@ -129,6 +147,7 @@ public class Topography implements DynamicElementMover{
 		allScenarioElements.add(stairs);
 		allScenarioElements.add(sources);
 		allScenarioElements.add(targets);
+		allScenarioElements.add(targetChangers);
 		allScenarioElements.add(boundaryObstacles);
 		allScenarioElements.add(measurementAreas);
 
@@ -138,8 +157,21 @@ public class Topography implements DynamicElementMover{
 		this.cars = new DynamicElementContainer<>(bounds, CELL_SIZE);
 		recomputeCells = false;
 
-		this.obstacleDistanceFunction = p -> obstacles.stream().map(obs -> obs.getShape()).map(shape -> shape.distance(p)).min(Double::compareTo).orElse(Double.MAX_VALUE);
+		this.obstacleDistanceFunction = point ->  obstacles.stream()
+				.map(Obstacle::getShape)
+				.map(shape -> shape.distance(point))
+				.min(Double::compareTo)
+				.orElse(Double.MAX_VALUE);
+
+		// some meaningful default value if used before simulation is started.
+		// will be replaced in the preeLoop like the obstacleDistanceFunction
+		//todo[random]: this should be drawn from a meta seed.
+		this.reachablePointProvider = SimpleReachablePointProvider.uniform(
+				new Random(42), getBounds(), obstacleDistanceFunction);
+
+
 		this.dynamicElementIdCounter = new AtomicInteger(1);
+		this.contextId = "";
 	}
 
 	/** Clean up a set by removing {@code null}. */
@@ -169,6 +201,16 @@ public class Topography implements DynamicElementMover{
 		return null;
 	}
 
+	public TargetChanger getTargetChanger(int targetChangerId) {
+		for (TargetChanger targetChanger : this.targetChangers) {
+			if (targetChanger.getId() == targetChangerId) {
+				return targetChanger;
+			}
+		}
+
+		return null;
+	}
+
 	public AbsorbingArea getAbsorbingArea(int targetId) {
 		for (AbsorbingArea absorbingArea : this.absorbingAreas) {
 			if (absorbingArea.getId() == targetId) {
@@ -183,7 +225,27 @@ public class Topography implements DynamicElementMover{
 		return this.obstacleDistanceFunction.apply(point);
 	}
 
-	public void setObstacleDistanceFunction(@NotNull Function<IPoint, Double> obstacleDistanceFunction) {
+	public double distanceToObstacle(@NotNull final IPoint point, final Agent caller) {
+		if(obstacleDistanceFunction instanceof IDistanceFunctionCached) {
+			return ((IDistanceFunctionCached)obstacleDistanceFunction).apply(point, caller);
+		} else {
+			return distanceToObstacle(point);
+		}
+	}
+
+	public IDistanceFunction getObstacleDistanceFunction() {
+			return obstacleDistanceFunction;
+	}
+
+	public IReachablePointProvider getReachablePointProvider() {
+		return reachablePointProvider;
+	}
+
+	public void setReachablePointProvider(@NotNull IReachablePointProvider reachablePointProvider) {
+		this.reachablePointProvider = reachablePointProvider;
+	}
+
+	public void setObstacleDistanceFunction(@NotNull IDistanceFunction obstacleDistanceFunction) {
 		this.obstacleDistanceFunction = obstacleDistanceFunction;
 	}
 
@@ -193,6 +255,14 @@ public class Topography implements DynamicElementMover{
 
 	public boolean containsTarget(final Predicate<Target> targetPredicate, final int targetId) {
 		return getTargets().stream().filter(t -> t.getId() == targetId).anyMatch(targetPredicate);
+	}
+
+	public boolean containsTargetChanger(final Predicate<TargetChanger> targetChangerPredicate) {
+		return getTargetChangers().stream().anyMatch(targetChangerPredicate);
+	}
+
+	public boolean containsTargetChanger(final Predicate<TargetChanger> targetChangerPredicate, final int targetChangerId) {
+		return getTargetChangers().stream().filter(t -> t.getId() == targetChangerId).anyMatch(targetChangerPredicate);
 	}
 
 	public boolean containsAbsorbingArea(final Predicate<AbsorbingArea> absorbingAreaPredicate) {
@@ -212,6 +282,14 @@ public class Topography implements DynamicElementMover{
 
 	public Map<Integer, List<VShape>> getTargetShapes() {
 		return getTargets().stream()
+				.collect(Collectors
+						.groupingBy(t -> t.getId(), Collectors
+								.mapping(t -> t.getShape(), Collectors
+										.toList())));
+	}
+
+	public Map<Integer, List<VShape>> getTargetChangerShapes() {
+		return getTargetChangers().stream()
 				.collect(Collectors
 						.groupingBy(t -> t.getId(), Collectors
 								.mapping(t -> t.getShape(), Collectors
@@ -331,12 +409,20 @@ public class Topography implements DynamicElementMover{
 		return targets;
 	}
 
+	public List<TargetChanger> getTargetChangers() {
+		return targetChangers;
+	}
+
 	public List<AbsorbingArea> getAbsorbingAreas() {
 		return absorbingAreas;
 	}
 
 	public List<Obstacle> getObstacles() {
 		return obstacles;
+	}
+
+	public List<VShape> getObstacleShapes() {
+		return obstacles.stream().map(obs -> obs.getShape()).collect(Collectors.toList());
 	}
 
 	public List<Stairs> getStairs() {
@@ -368,6 +454,8 @@ public class Topography implements DynamicElementMover{
 	public void addTarget(Target target) {
 		this.targets.add(target);
 	}
+
+	public void addTargetChanger(TargetChanger targetChanger) { this.targetChangers.add(targetChanger); }
 
 	public void addAbsorbingArea(AbsorbingArea absorbingArea) {
 		this.absorbingAreas.add(absorbingArea);
@@ -447,8 +535,18 @@ public class Topography implements DynamicElementMover{
 	 * writing the topography to file.
 	 */
 	public void addBoundary(Obstacle obstacle) {
+
+		if (obstacle.getId() == Attributes.ID_NOT_SET){
+			int nextId = obstacles.stream().map(Obstacle::getId).max(Integer::compareTo).orElse(1) + 1;
+			obstacle.setId(nextId);
+		}
+
 		this.addObstacle(obstacle);
 		this.boundaryObstacles.add(obstacle);
+	}
+
+	public List<Obstacle> getBoundaryObstacles() {
+		return new ArrayList<>(boundaryObstacles);
 	}
 
 	public void removeBoundary() {
@@ -496,12 +594,14 @@ public class Topography implements DynamicElementMover{
 		for (MeasurementArea measurementArea : this.getMeasurementAreas()){
 			s.addMeasurementArea(measurementArea);
 		}
-
 		for (Stairs stairs : getStairs()) {
-			s.addStairs(stairs);
+			s.addStairs(stairs.clone());
 		}
 		for (Target target : getTargets()) {
 			s.addTarget(target.clone());
+		}
+		for (TargetChanger targetChanger : getTargetChangers()) {
+			s.addTargetChanger(targetChanger.clone());
 		}
 		for (AbsorbingArea absorbingArea: getAbsorbingAreas()) {
 			s.addAbsorbingArea(absorbingArea.clone());
@@ -593,16 +693,22 @@ public class Topography implements DynamicElementMover{
 	public void generateUniqueIdIfNotSet(){
 		Set<Integer> usedIds = sources.stream().map(Source::getId).collect(Collectors.toSet());
 		usedIds.addAll(targets.stream().map(Target::getId).collect(Collectors.toSet()));
+		usedIds.addAll(targetChangers.stream().map(TargetChanger::getId).collect(Collectors.toSet()));
 		usedIds.addAll(obstacles.stream().map(Obstacle::getId).collect(Collectors.toSet()));
 		usedIds.addAll(stairs.stream().map(Stairs::getId).collect(Collectors.toSet()));
 		usedIds.addAll(measurementAreas.stream().map(MeasurementArea::getId).collect(Collectors.toSet()));
 		usedIds.addAll(absorbingAreas.stream().map(AbsorbingArea::getId).collect(Collectors.toSet()));
+		usedIds.addAll(getInitialElements(Pedestrian.class).stream().map(Agent::getId).collect(Collectors.toSet()));
 
 		sources.stream()
 				.filter(s -> s.getId() == Attributes.ID_NOT_SET)
 				.forEach(s -> s.getAttributes().setId(nextIdNotInSet(usedIds)));
 
 		targets.stream()
+				.filter(s -> s.getId() == Attributes.ID_NOT_SET)
+				.forEach(s -> s.getAttributes().setId(nextIdNotInSet(usedIds)));
+
+		targetChangers.stream()
 				.filter(s -> s.getId() == Attributes.ID_NOT_SET)
 				.forEach(s -> s.getAttributes().setId(nextIdNotInSet(usedIds)));
 
@@ -621,6 +727,11 @@ public class Topography implements DynamicElementMover{
 		absorbingAreas.stream()
 				.filter(s -> s.getId() == Attributes.ID_NOT_SET)
 				.forEach(s -> s.getAttributes().setId(nextIdNotInSet(usedIds)));
+
+
+		getInitialElements(Pedestrian.class).stream()
+				.filter(s -> s.getId() == Attributes.ID_NOT_SET)
+				.forEach(s -> s.getAttributes().setId(nextIdNotInSet(usedIds)));
 	}
 
 	private int nextIdNotInSet(Set<Integer> usedIDs){
@@ -634,10 +745,18 @@ public class Topography implements DynamicElementMover{
 
 
 	public ArrayList<ScenarioElement> getAllScenarioElements(){
-		ArrayList<ScenarioElement> all = new ArrayList<>((obstacles.size() + stairs.size() + targets.size() + sources.size() + boundaryObstacles.size() + absorbingAreas.size()));
+		ArrayList<ScenarioElement> all = new ArrayList<>((obstacles.size()
+				+ stairs.size()
+				+ targets.size()
+				+ targetChangers.size()
+				+ sources.size()
+				+ boundaryObstacles.size()
+				+ absorbingAreas.size()));
+
 		all.addAll(obstacles);
 		all.addAll(stairs);
 		all.addAll(targets);
+		all.addAll(targetChangers);
 		all.addAll(sources);
 		all.addAll(boundaryObstacles);
 		all.addAll(measurementAreas);
@@ -660,5 +779,13 @@ public class Topography implements DynamicElementMover{
 		}
 
 		return obstacles;
+	}
+
+	public String getContextId() {
+		return contextId;
+	}
+
+	public void setContextId(String contextId) {
+		this.contextId = contextId;
 	}
 }

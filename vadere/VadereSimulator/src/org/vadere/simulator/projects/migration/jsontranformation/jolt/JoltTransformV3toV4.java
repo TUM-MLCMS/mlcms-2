@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.vadere.annotation.factories.migrationassistant.MigrationTransformation;
-import org.vadere.simulator.entrypoints.Version;
+import org.vadere.util.version.Version;
 import org.vadere.simulator.projects.migration.MigrationException;
-import org.vadere.simulator.projects.migration.jsontranformation.AbstractJsonTransformation;
 import org.vadere.simulator.projects.migration.jsontranformation.JoltTransformation;
+import org.vadere.state.attributes.AttributesSimulation;
 
 import java.util.Random;
 
@@ -25,7 +25,7 @@ public class JoltTransformV3toV4 extends JoltTransformation {
 	}
 
 	public JsonNode presetSeedValues(JsonNode node) throws MigrationException {
-			JsonNode attSim = node.findPath("scenario").findPath("attributesSimulation");
+			JsonNode attSim = node.findPath("scenario").findPath(AttributesSimulation.JSON_KEY);
 			if (attSim.isMissingNode())
 				throw new MigrationException("attributesSimulation is not part of Scenario.");
 

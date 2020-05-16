@@ -7,13 +7,13 @@ import java.util.Random;
 import java.util.Scanner;
 
 import org.vadere.simulator.models.seating.trainmodel.TrainModel;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesSeating;
 import org.vadere.state.scenario.Et423Geometry;
 import org.vadere.state.scenario.Topography;
 import org.vadere.state.scenario.TrainGeometry;
 import org.vadere.state.util.StateJsonConverter;
-import org.vadere.state.util.TextOutOfNodeException;
 
 public class TestTopographyAndModelBuilder {
 	
@@ -48,7 +48,7 @@ public class TestTopographyAndModelBuilder {
 	public SeatingModel getSeatingModel() {
 		final SeatingModel model = new SeatingModel();
 		final List<Attributes> attributes = Collections.singletonList(new AttributesSeating());
-		model.initialize(attributes, topography, null, new Random());
+		model.initialize(attributes, new Domain(topography), null, new Random());
 		return model;
 	}
 
@@ -57,7 +57,7 @@ public class TestTopographyAndModelBuilder {
 			@SuppressWarnings("resource")
 			final String json = new Scanner(TestTopographyAndModelBuilder.class.getResourceAsStream(TEST_TRAIN_TOPOGRAPHY_RESOURCE), "UTF-8").useDelimiter("\\A").next();
 			return StateJsonConverter.deserializeTopography(json);
-		} catch (IOException | TextOutOfNodeException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}

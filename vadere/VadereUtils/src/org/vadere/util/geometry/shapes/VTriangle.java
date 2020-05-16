@@ -1,14 +1,10 @@
 package org.vadere.util.geometry.shapes;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 import org.jetbrains.annotations.NotNull;
 import org.vadere.util.geometry.GeometryUtils;
-import org.vadere.util.geometry.Vector3D;
 
-import static java.lang.Double.isInfinite;
-import static java.lang.Double.isNaN;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * A triangle. Points must be given in counter clockwise manner to get correct
@@ -28,6 +24,8 @@ public class VTriangle extends VPolygon {
 
     public final VLine[] lines;
 
+    private double area;
+
     /**
      * The centroid will be saved for performance boost, since this object is immutable.
      */
@@ -39,8 +37,10 @@ public class VTriangle extends VPolygon {
 
     private VPoint orthocenter;
 
+    private double radius = -1;
+
     /**
-     * Creates a triangle. Points must be given in ccw order.
+     * Creates a triangle. Points must be given in ccwRobust order.
      *
      * @param p1 first point of the triangle
      * @param p2 second point of the triangle
@@ -55,17 +55,28 @@ public class VTriangle extends VPolygon {
         this.p1 = p1;
         this.p2 = p2;
         this.p3 = p3;
-
+		this.area = 0;
         lines = new VLine[]{ new VLine(p1, p2), new VLine(p2, p3), new VLine(p3,p1) };
     }
 
     @Override
     public boolean contains(final IPoint point) {
         return GeometryUtils.triangleContains(p1, p2, p3, point);
-
     }
 
-    // TODO: find better name
+	@Override
+	public double getArea() {
+    	return Math.abs(getSignedArea());
+	}
+
+	public double getSignedArea() {
+    	if(area == 0) {
+    		area = GeometryUtils.signedAreaOfPolygon(p1, p2, p3);
+	    }
+    	return area;
+	}
+
+	// TODO: find better name
     public boolean isPartOf(final IPoint point, final double eps) {
         double d1 = GeometryUtils.ccw(point, p1, p2);
         double d2 = GeometryUtils.ccw(point, p2, p3);
@@ -74,8 +85,7 @@ public class VTriangle extends VPolygon {
     }
 
     public VPoint midPoint() {
-        return new VPoint((p1.getX() + p2.getX() + p3.getX()) / 3.0,
-                (p1.getY() + p2.getY() + p3.getY()) / 3.0);
+    	return GeometryUtils.getTriangleMidpoint(p1.getX(), p1.getY(), p2.getX(), p2.getY(), p3.getX(), p3.getY());
     }
 
     public boolean isLine() {
@@ -192,7 +202,10 @@ public class VTriangle extends VPolygon {
     }
 
     public double getCircumscribedRadius() {
-        return getCircumcenter().distance(p1);
+    	if(radius == -1) {
+    		radius = getCircumcenter().distance(p1);
+	    }
+        return radius;
     }
 
     public boolean isInCircumscribedCycle(final IPoint point) {
@@ -203,11 +216,24 @@ public class VTriangle extends VPolygon {
         return Arrays.stream(getLines());
     }
 
-    public double maxCoordinate() {
-        double max = Math.max(Math.abs(p1.getX()), Math.abs(p1.getY()));
-        max = Math.max(max, Math.max(Math.abs(p2.getX()), Math.abs(p2.getY())));
-        max = Math.max(max, Math.max(Math.abs(p3.getX()), Math.abs(p3.getY())));
-        return max;
+    public double getRadiusEdgeRatio() {
+		// (1) find shortest line
+    	VLine shortestLine;
+    	if(lines[0].length() <= lines[1].length()) {
+			if(lines[0].length() <= lines[2].length()) {
+				shortestLine = lines[0];
+			} else {
+				shortestLine = lines[2];
+			}
+		} else {
+		    if(lines[1].length() <= lines[2].length()) {
+			    shortestLine = lines[1];
+		    } else {
+			    shortestLine = lines[2];
+		    }
+	    }
+
+    	return getCircumscribedRadius() / shortestLine.length();
     }
 
     public VLine[] getLines() {
@@ -218,4 +244,5 @@ public class VTriangle extends VPolygon {
     public String toString() {
         return "["+p1 + "," + p2 + "," + p3 + "]";
     }
+
 }

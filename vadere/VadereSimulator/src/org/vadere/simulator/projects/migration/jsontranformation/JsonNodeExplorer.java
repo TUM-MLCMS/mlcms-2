@@ -6,11 +6,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.vadere.simulator.entrypoints.Version;
+import org.vadere.util.version.Version;
 import org.vadere.simulator.projects.migration.MigrationException;
 import org.vadere.simulator.projects.migration.incident.helper.JsonFilterIterator;
 import org.vadere.state.attributes.scenario.AttributesMeasurementArea;
 import org.vadere.state.scenario.MeasurementArea;
+import org.vadere.state.util.StateJsonConverter;
 import org.vadere.util.geometry.shapes.VShape;
 
 import java.io.IOException;
@@ -21,6 +22,9 @@ import java.util.function.Predicate;
 public interface JsonNodeExplorer {
 
 
+	default ObjectMapper getMapper(){
+		return StateJsonConverter.getMapper();
+	}
 
 	default void addToObjectNode(JsonNode node, String key, String value) {
 		((ObjectNode) node).put(key, value);
@@ -33,6 +37,12 @@ public interface JsonNodeExplorer {
 		}
 	}
 
+	default void removeIfExists(JsonNode root, String childName) throws MigrationException {
+		if (hasChild(root, childName)){
+			remove(root, childName);
+		}
+	}
+
 	default JsonNode setVersionFromTo(JsonNode scenarioFile, Version from, Version to) throws MigrationException {
 		JsonNode version = pathMustExist(scenarioFile, "release");
 		if (!version.asText().equals(from.label()))
@@ -41,6 +51,21 @@ public interface JsonNodeExplorer {
 							version.asText(), from.label()));
 		((ObjectNode)scenarioFile).put("release", to.label());
 		return scenarioFile;
+	}
+
+	default void changeStringValue(JsonNode parent, String keyName, String value){
+		ObjectNode p = (ObjectNode) parent;
+		p.put(keyName, value);
+	}
+
+	default void changeIntegerValue(JsonNode parent, String keyName, Integer value){
+		ObjectNode p = (ObjectNode) parent;
+		p.put(keyName, value);
+	}
+
+	default void changeDoubleValue(JsonNode parent, String keyName, double value){
+		ObjectNode p = (ObjectNode) parent;
+		p.put(keyName, value);
 	}
 
 	default  void addIntegerField(JsonNode root, String keyName, int value){
@@ -76,9 +101,28 @@ public interface JsonNodeExplorer {
 		return ret;
 	}
 
+	/**
+	 * Test if Node has a child with the given name.
+	 * @param root			ParentNode
+	 * @param childName		Name of child
+	 * @return				True if Parent has a *direct* child named 'childName'
+	 */
+	default boolean hasChild(JsonNode root, String childName){
+		return !path(root, childName).isMissingNode();
+	}
+
 	default boolean nodeIsArray(JsonNode node) {
 		return nodeNotEmptyAnd(node, n -> n.getNodeType() == JsonNodeType.ARRAY);
 	}
+
+	default boolean nodeIsString(JsonNode node){
+		return nodeNotEmptyAnd(node, n -> n.getNodeType() == JsonNodeType.STRING);
+	}
+
+	default boolean nodeIsNumber(JsonNode node){
+		return nodeNotEmptyAnd(node, n -> n.getNodeType() == JsonNodeType.NUMBER);
+	}
+
 
 	default boolean nodeNotEmptyAnd(JsonNode node, Predicate<JsonNode> predicate) {
 		return !node.isMissingNode() && predicate.test(node);
@@ -112,6 +156,21 @@ public interface JsonNodeExplorer {
 			String type = path(n, "type").asText();
 			return type.equals(processorType);
 		});
+	}
+
+	default Iterator<JsonNode> iteratorTargetChangers(JsonNode node) throws MigrationException{
+		JsonNode tChanger = pathMustExist(node, "scenario/topography/targetChangers");
+		return new JsonFilterIterator(tChanger, n->true);
+	}
+
+	default Iterator<JsonNode> iteratorMeasurementAreas(JsonNode node) throws MigrationException{
+		JsonNode tChanger = pathMustExist(node, "scenario/topography/measurementAreas");
+		return new JsonFilterIterator(tChanger, n->true);
+	}
+
+	default Iterator<JsonNode> iteratorSources(JsonNode node) throws MigrationException{
+		JsonNode tChanger = pathMustExist(node, "scenario/topography/measurementAreas");
+		return new JsonFilterIterator(tChanger, n->true);
 	}
 
 	default  Iterator<JsonNode> iteratorMeasurementArea(JsonNode node, int id) throws MigrationException {
@@ -161,6 +220,12 @@ public interface JsonNodeExplorer {
 			ObjectNode topographyJson = (ObjectNode)pathMustExist(scenarioFile, relPath);
 			topographyJson.putArray(fieldName);
 		}
+	}
+
+	default void addArrayField(JsonNode node, String fieldName,Object data){
+		ObjectNode objNode = (ObjectNode)node;
+		ArrayNode dataNode = getMapper().valueToTree(data);
+		objNode.putArray(fieldName).addAll(dataNode);
 	}
 
 	/**

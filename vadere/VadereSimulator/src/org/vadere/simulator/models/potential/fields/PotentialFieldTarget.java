@@ -1,8 +1,10 @@
 package org.vadere.simulator.models.potential.fields;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.vadere.meshing.mesh.inter.IMesh;
 import org.vadere.simulator.models.potential.solver.calculators.EikonalSolver;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesFloorField;
 import org.vadere.state.attributes.scenario.AttributesAgent;
@@ -11,13 +13,11 @@ import org.vadere.state.scenario.ScenarioElement;
 import org.vadere.state.scenario.Target;
 import org.vadere.state.scenario.TargetPedestrian;
 import org.vadere.state.scenario.Topography;
-import org.vadere.util.data.cellgrid.IPotentialPoint;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VShape;
 import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.logging.Logger;
-import org.vadere.util.math.InterpolationUtil;
 import org.vadere.util.math.MathUtil;
 
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	/**
 	 * the topography of the running simulation.
 	 */
-	protected final Topography topography;
+	protected final Domain domain;
 
 	/**
 	 * false if and only if there exits no dynamic potential field.
@@ -59,7 +59,6 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	 */
 	private AttributesAgent attributesPedestrian;
 
-
 	/**
 	 * Stores all potential fields which represent to a target (targetId).
 	 * This Map has to be filled by classes extending this class.
@@ -67,10 +66,10 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	protected final Map<Integer, EikonalSolver> eikonalSolvers;
 
 
-	public PotentialFieldTarget(@NotNull final Topography topography,
+	public PotentialFieldTarget(@NotNull final Domain domain,
 	                            @NotNull final AttributesAgent attributesPedestrian,
 	                            @NotNull final AttributesFloorField attributesPotential) {
-		this.topography = topography;
+		this.domain = domain;
 		this.attributesPedestrian = attributesPedestrian;
 		this.attributes = attributesPotential;
 		this.eikonalSolvers = new HashMap<>();
@@ -91,8 +90,8 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	}
 
 	@Override
-	public Function<Agent, IMesh<? extends IPotentialPoint, ?, ?, ?>> getDiscretization() {
-		Map<Integer, IMesh<? extends IPotentialPoint, ?, ?, ?>> clone = new HashMap<>();
+	public Function<Agent, IMesh<?, ?, ?>> getDiscretization() {
+		Map<Integer, IMesh<?, ?, ?>> clone = new HashMap<>();
 
 		for(Map.Entry<Integer, EikonalSolver> entry : eikonalSolvers.entrySet()) {
 			Integer targetId = entry.getKey();
@@ -134,16 +133,25 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 		}
 
 		int targetId = agent.getNextTargetId();
+		return getPotential(pos, targetId, agent);
+	}
 
+	private double getPotential(@NotNull final IPoint pos, final int targetId, @Nullable final Object caller) {
 		// the agent has reached his current target
-		if (topography.getTarget(targetId).getShape().contains(pos)) {
+		if (domain.getTopography().getTarget(targetId).getShape().contains(pos)) {
 			return 0.0;
 		}
 
-		// the agent is inside an obstacle
-		for (ScenarioElement b : topography.getObstacles()) {
-			if (b.getShape().contains(pos)) {
-				return Double.MAX_VALUE;
+		// the agent is inside an obstacle, if we use a mesh instead of a cell grid
+		// the mesh will align with obstacles i.e. this is not required.
+		// Since we iterate over ALL obstacle shapes which might be complex polygons
+		// this loop can be very computational expensive.
+		// TODO: introduce a data structure such that we only have to check one or a view shapes.
+		if(attributes.getCreateMethod().isUsingCellGrid()) {
+			for (ScenarioElement b : domain.getTopography().getObstacles()) {
+				if (b.getShape().contains(pos)) {
+					return Double.MAX_VALUE;
+				}
 			}
 		}
 
@@ -157,7 +165,17 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 		}
 
 		EikonalSolver eikonalSolver = optEikonalSolver.get();
-		return eikonalSolver.getPotential(pos);
+		if(caller == null) {
+			return eikonalSolver.getPotential(pos);
+		} else {
+			return eikonalSolver.getPotential(pos, caller);
+		}
+
+	}
+
+	@Override
+	public double getPotential(@NotNull final IPoint pos, final int targetId) {
+		return getPotential(pos, targetId, null);
 	}
 
 	/**
@@ -196,17 +214,17 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	 * @param shapes    the target area
 	 */
 	protected void addEikonalSolver(final int targetId, final List<VShape> shapes) {
-		EikonalSolver eikonalSolver = IPotentialField.create(topography, targetId, shapes, attributesPedestrian, attributes);
+		EikonalSolver eikonalSolver = IPotentialField.create(domain, targetId, shapes, attributesPedestrian, attributes);
 		potentialFieldsNeedUpdate = potentialFieldsNeedUpdate || eikonalSolver.needsUpdate();
 		eikonalSolvers.put(targetId, eikonalSolver);
 	}
 
 	@Override
-	public void initialize(List<Attributes> attributesList, Topography topography, AttributesAgent attributesPedestrian, Random random) {}
+	public void initialize(List<Attributes> attributesList, Domain topography, AttributesAgent attributesPedestrian, Random random) {}
 
 	private void addMissingEikonalSolvers() {
-		Map<Integer, List<VShape>> mergeMap = topography.getTargetShapes();
-		topography.getTargets().stream()
+		Map<Integer, List<VShape>> mergeMap = domain.getTopography().getTargetShapes();
+		domain.getTopography().getTargets().stream()
 				.filter(t -> !getSolver(t.getId()).isPresent())
 				.forEach(t -> addEikonalSolver(t.getId(), mergeMap.get(t.getId())));
 	}
@@ -218,7 +236,7 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	 * @return true if the dynamic potential fields has to be updated, false otherwise.
 	 */
 	protected boolean isNeedsUpdate(final double simTimeInSec) {
-		return lastUpdateTimestamp < simTimeInSec && (potentialFieldsNeedUpdate || topography.containsTarget(t -> (t.isMovingTarget() || t.isTargetPedestrian())));
+		return lastUpdateTimestamp < simTimeInSec && (potentialFieldsNeedUpdate || domain.getTopography().containsTarget(t -> (t.isMovingTarget() || t.isTargetPedestrian())));
 	}
 
 	/**
@@ -254,8 +272,8 @@ public class PotentialFieldTarget implements IPotentialFieldTarget {
 	@Override
 	public void update(final double simTimeInSec) {
 		if (isNeedsUpdate(simTimeInSec)) {
-			List<Target> targets = topography.getTargets();
-			Map<Integer, List<VShape>> mergeMap = topography.getTargetShapes();
+			List<Target> targets = domain.getTopography().getTargets();
+			Map<Integer, List<VShape>> mergeMap = domain.getTopography().getTargetShapes();
 			lastUpdateTimestamp = simTimeInSec;
 			targets.stream().forEach(target -> updatePotentialField(simTimeInSec, target, mergeMap.get(target.getId())));
 		}

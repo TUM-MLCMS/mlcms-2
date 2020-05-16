@@ -3,17 +3,11 @@ package org.vadere.simulator.models.osm.updateScheme;
 import org.jetbrains.annotations.NotNull;
 import org.vadere.simulator.models.osm.OSMBehaviorController;
 import org.vadere.simulator.models.osm.PedestrianOSM;
-import org.vadere.simulator.models.potential.combinedPotentials.CombinedPotentialStrategy;
-import org.vadere.simulator.models.potential.combinedPotentials.TargetDistractionStrategy;
-import org.vadere.state.behavior.SalientBehavior;
-import org.vadere.state.events.types.*;
+import org.vadere.state.psychology.cognition.SelfCategory;
 import org.vadere.state.scenario.Pedestrian;
-import org.vadere.state.scenario.Target;
 import org.vadere.state.scenario.Topography;
-import org.vadere.util.geometry.shapes.VPoint;
 
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 /**
@@ -29,51 +23,56 @@ public class UpdateSchemeEventDriven implements UpdateSchemeOSM {
 		this.topography = topography;
 		this.pedestrianEventsQueue = new PriorityQueue<>(100, new ComparatorPedestrianOSM());
 		this.pedestrianEventsQueue.addAll(topography.getElements(PedestrianOSM.class));
-		osmBehaviorController = new OSMBehaviorController();
+		this.osmBehaviorController = new OSMBehaviorController();
 	}
 
 	@Override
 	public void update(final double timeStepInSec, final double currentTimeInSec) {
-
 		clearStrides(topography);
-
 		if(!pedestrianEventsQueue.isEmpty()) {
 			// event driven update ignores time credits!
 			while (pedestrianEventsQueue.peek().getTimeOfNextStep() < currentTimeInSec) {
 				PedestrianOSM ped = pedestrianEventsQueue.poll();
-				update(ped, currentTimeInSec);
+				update(ped, timeStepInSec, currentTimeInSec);
 				//System.out.println(ped.getId());
 				pedestrianEventsQueue.add(ped);
 			}
 		}
 	}
 
-	protected void update(@NotNull final PedestrianOSM pedestrian, final double currentTimeInSec) {
-		Event mostImportantEvent = pedestrian.getMostImportantEvent();
+	protected void update(@NotNull final PedestrianOSM pedestrian, final double timeStepInSec, final double currentTimeInSec) {
+		// for the first step after creation, timeOfNextStep has to be initialized
+		if (pedestrian.getTimeOfNextStep() == Pedestrian.INVALID_NEXT_EVENT_TIME) {
+			pedestrian.setTimeOfNextStep(currentTimeInSec);
+			return;
+		}
 
-		if (mostImportantEvent instanceof ElapsedTimeEvent) {
-			VPoint oldPosition = pedestrian.getPosition();
+		SelfCategory selfCategory = pedestrian.getSelfCategory();
 
-			// for the first step after creation, timeOfNextStep has to be initialized
-			if (pedestrian.getTimeOfNextStep() == 0) {
-				pedestrian.setTimeOfNextStep(currentTimeInSec);
+		// TODO: Maybe, use a state table with function pointers to a template function myFunc(ped, topography, time)
+		if (selfCategory == SelfCategory.TARGET_ORIENTED) {
+			osmBehaviorController.makeStepToTarget(pedestrian, topography);
+		} else if (selfCategory == SelfCategory.COOPERATIVE) {
+			PedestrianOSM candidate = osmBehaviorController.findSwapCandidate(pedestrian, topography);
+
+			if (candidate != null) {
+				pedestrianEventsQueue.remove(candidate);
+				osmBehaviorController.swapPedestrians(pedestrian, candidate, topography);
+				pedestrianEventsQueue.add(candidate);
+			} else {
+				osmBehaviorController.makeStepToTarget(pedestrian, topography);
 			}
-
-			if (pedestrian.getSalientBehavior() == SalientBehavior.TARGET_ORIENTED) {
-				// this can cause problems if the pedestrian desired speed is 0 (see speed adjuster)
-				pedestrian.updateNextPosition();
-				osmBehaviorController.makeStep(pedestrian, topography, pedestrian.getDurationNextStep());
-				pedestrian.setTimeOfNextStep(pedestrian.getTimeOfNextStep() + pedestrian.getDurationNextStep());
-			} else if (pedestrian.getSalientBehavior() == SalientBehavior.COOPERATIVE) {
-				osmBehaviorController.swapWithClosestCooperativePedestrian(pedestrian, topography);
-			}
-		} else if (mostImportantEvent instanceof WaitEvent || mostImportantEvent instanceof WaitInAreaEvent) {
-			osmBehaviorController.wait(pedestrian);
-		} else if (mostImportantEvent instanceof BangEvent) {
-			osmBehaviorController.reactToBang(pedestrian, topography);
-
-			// Set time of next step. Otherwise, the internal OSM event queue hangs endlessly.
-			pedestrian.setTimeOfNextStep(pedestrian.getTimeOfNextStep() + pedestrian.getDurationNextStep());
+		} else if (selfCategory == SelfCategory.INSIDE_THREAT_AREA) {
+			osmBehaviorController.changeToTargetRepulsionStrategyAndIncreaseSpeed(pedestrian, topography);
+			osmBehaviorController.makeStepToTarget(pedestrian, topography);
+		} else if (selfCategory == SelfCategory.OUTSIDE_THREAT_AREA) {
+			osmBehaviorController.changeTargetToSafeZone(pedestrian, topography);
+			osmBehaviorController.makeStepToTarget(pedestrian, topography);
+		} else if (selfCategory == SelfCategory.WAIT) {
+			osmBehaviorController.wait(pedestrian, topography, timeStepInSec);
+		} else if (selfCategory == SelfCategory.CHANGE_TARGET) {
+			osmBehaviorController.changeTarget(pedestrian, topography);
+			//else if
 		}
 	}
 

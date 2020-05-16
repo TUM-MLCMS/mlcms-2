@@ -1,21 +1,11 @@
 package org.vadere.simulator.models.bhm;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.vadere.simulator.models.potential.fields.IPotentialFieldTarget;
 import org.vadere.state.attributes.models.AttributesBHM;
 import org.vadere.state.attributes.scenario.AttributesAgent;
-import org.vadere.state.events.exceptions.UnsupportedEventException;
-import org.vadere.state.events.types.ElapsedTimeEvent;
-import org.vadere.state.events.types.Event;
-import org.vadere.state.events.types.WaitEvent;
-import org.vadere.state.events.types.WaitInAreaEvent;
+import org.vadere.state.psychology.cognition.SelfCategory;
 import org.vadere.state.scenario.Obstacle;
 import org.vadere.state.scenario.Pedestrian;
 import org.vadere.state.scenario.Target;
@@ -26,6 +16,8 @@ import org.vadere.util.geometry.shapes.VLine;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.logging.Logger;
+
+import java.util.*;
 
 public class PedestrianBHM extends Pedestrian {
 
@@ -66,6 +58,7 @@ public class PedestrianBHM extends Pedestrian {
 		this.random = random;
 		this.attributesBHM = attributesBHM;
 		this.topography = topography;
+		this.timeOfNextStep = INVALID_NEXT_EVENT_TIME;
 
 		this.setVelocity(new Vector2D(0, 0));
 
@@ -170,26 +163,33 @@ public class PedestrianBHM extends Pedestrian {
 		}
 
 		// for the first step after creation, timeOfNextStep has to be initialized
-		if (getTimeOfNextStep() == 0) {
+		if (getTimeOfNextStep() == INVALID_NEXT_EVENT_TIME) {
 			timeOfNextStep = currentTimeInSec;
+			return;
 		}
 
 		durationNextStep = stepLength / getFreeFlowSpeed();
 
-		Event mostImportantEvent = getMostImportantEvent();
+		double startTimeStep = timeOfNextStep;
+		double endTimeStep = timeOfNextStep + durationNextStep;
+		timeOfNextStep = endTimeStep;
+
+		SelfCategory selfCategory = getSelfCategory();
+
 		VPoint position = getPosition();
-		if (mostImportantEvent instanceof ElapsedTimeEvent) {
+		if (selfCategory == SelfCategory.TARGET_ORIENTED) {
 			updateTargetDirection();
 			nextPosition = navigation.getNavigationPosition();
 			makeStep();
-			timeOfNextStep += durationNextStep;
-		} else if (mostImportantEvent instanceof WaitEvent || mostImportantEvent instanceof WaitInAreaEvent) {
-			timeOfNextStep += durationNextStep;
+		} else if (selfCategory == SelfCategory.WAIT) {
+			// do nothing
 		} else {
-			throw new UnsupportedEventException(mostImportantEvent, this.getClass());
+			throw new IllegalArgumentException("Unsupported SelfCategory: " + selfCategory);
 		}
 
-		getFootSteps().add(new FootStep(position, getPosition(), timeOfNextStep, timeOfNextStep + durationNextStep));
+		FootStep currentFootstep = new FootStep(position, getPosition(), startTimeStep, endTimeStep);
+		getTrajectory().add(currentFootstep);
+		getFootstepHistory().add(currentFootstep);
 	}
 
 	/**

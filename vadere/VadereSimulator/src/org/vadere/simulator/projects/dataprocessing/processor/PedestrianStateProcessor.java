@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.vadere.annotation.factories.dataprocessors.DataProcessorClass;
-import org.vadere.simulator.control.SimulationState;
+import org.vadere.simulator.control.simulation.SimulationState;
 import org.vadere.simulator.projects.dataprocessing.ProcessorManager;
 import org.vadere.simulator.projects.dataprocessing.datakey.TimestepPedestrianIdKey;
 import org.vadere.state.scenario.Agent;
@@ -39,7 +39,7 @@ public class PedestrianStateProcessor extends DataProcessor<TimestepPedestrianId
 			.map(Agent::getId)
 			.collect(Collectors.toList());
 		
-		//insert ped states c = created or m = moved 
+		//insertVertex ped states c = created or m = moved
 		pedsInThisState.stream()
 			.forEach(id -> {
 				boolean pedEntryExists = getKeys().stream()

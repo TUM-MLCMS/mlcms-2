@@ -42,7 +42,18 @@ public enum ScenarioCheckerReason {
 	// Simulation attribute reasons
 	SIM_TIME_STEP_WRONG("ScenarioChecker.simAttr.simTimeStepWrong"),
 
-	PROCESSOR_MEASUREMENT_AREA("ScenarioChecker.processor.measuremetarea.doesNotExist");
+	PROCESSOR_MEASUREMENT_AREA("ScenarioChecker.processor.measurementarea.doesNotExist"),
+
+	// AreaDensityVoronoiProcessor
+	AREAS_DENSITY_VORONOI_PROCESSOR_MISMATCH("ScenarioChecker.processor.checkAreasInAreaDensityVoronoiProcessor.mismatch"),
+	MEASUREMENT_AREA_NOT_RECTANGULAR("ScenarioChecker.processor.measurementArea.hasToBeRectangular"),
+
+	// Group attributes
+	GROUP_SETUP_IGNORED("ScenarioChecker.simAttr.GroupSetup.ignored"),
+
+
+	// Model reasons
+	CA_SPAWNING("ScenarioChecker.models.ca.spawning.setup.err");
 
 	private String msgId;
 

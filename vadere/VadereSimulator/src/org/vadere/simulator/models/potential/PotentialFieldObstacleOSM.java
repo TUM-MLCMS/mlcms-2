@@ -1,39 +1,40 @@
 package org.vadere.simulator.models.potential;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
-
-import org.vadere.simulator.models.Model;
 import org.vadere.annotation.factories.models.ModelClass;
+import org.vadere.simulator.models.Model;
 import org.vadere.simulator.models.potential.fields.PotentialFieldObstacle;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesPotentialOSM;
 import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.Agent;
 import org.vadere.state.scenario.Obstacle;
 import org.vadere.state.scenario.Topography;
-import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.geometry.shapes.VPoint;
+import org.vadere.util.geometry.shapes.Vector2D;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 
 @ModelClass
 public class PotentialFieldObstacleOSM implements PotentialFieldObstacle {
 
 	private AttributesPotentialOSM attributes;
 	private Collection<Obstacle> obstacles;
-	private Topography topography;
+	private Domain domain;
 
 	public PotentialFieldObstacleOSM() {}
 
 	@Override
-	public void initialize(List<Attributes> attributesList, Topography topography,
+	public void initialize(List<Attributes> attributesList, Domain domain,
 	                       AttributesAgent attributesPedestrian, Random random) {
 		AttributesPotentialOSM attributesPotentialOSM = Model.findAttributes(attributesList, AttributesPotentialOSM.class);
 		this.attributes = attributesPotentialOSM;
-		this.topography = topography;
-		this.obstacles = new ArrayList<>(topography.getObstacles());
+		this.domain = domain;
+		this.obstacles = new ArrayList<>(domain.getTopography().getObstacles());
 	}
 
 	@Override
@@ -43,7 +44,7 @@ public class PotentialFieldObstacleOSM implements PotentialFieldObstacle {
 		double repulsion = 0;
 		//for (Obstacle obstacle : obstacles) {
 
-			double distance = topography.distanceToObstacle(pos) - pedestrian.getRadius();
+			double distance = domain.getTopography().distanceToObstacle(pos) - pedestrian.getRadius();
 
 			// Shapes of pedestrians are assumed to be circles.
 			/*double distance = obstacle.getShape().distance(pos)
@@ -131,8 +132,8 @@ public class PotentialFieldObstacleOSM implements PotentialFieldObstacle {
 	public PotentialFieldObstacle copy() {
 		PotentialFieldObstacleOSM potentialFieldObstacleOSM = new PotentialFieldObstacleOSM();
 		potentialFieldObstacleOSM.attributes = attributes;
-		potentialFieldObstacleOSM.topography = topography;
-		potentialFieldObstacleOSM.obstacles = topography.getObstacles();
+		potentialFieldObstacleOSM.domain = domain;
+		potentialFieldObstacleOSM.obstacles = domain.getTopography().getObstacles();
 		return potentialFieldObstacleOSM;
 	}
 }

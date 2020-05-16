@@ -1,11 +1,13 @@
 package org.vadere.util.lang;
 
 import org.jetbrains.annotations.NotNull;
+import org.vadere.util.config.VadereConfig;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.prefs.Preferences;
+
+import javax.swing.*;
 
 /**
  * Manage all {@link java.util.ResourceBundle}s present in the application.
@@ -48,12 +50,13 @@ public class BundleManager {
 
 	public void setLanguage(Locale locale){
 		currentLocale = locale;
+		Locale.setDefault(locale);
 		reloadBundles();
 	}
 
 	public void setLanguage(Class<?> clazz){
-		String language = Preferences.userNodeForPackage(clazz).get("language", null);
-		Locale locale =defaultLocale;
+		String language = VadereConfig.getConfig().getString("Messages.language", null);
+		Locale locale = defaultLocale;
 		if (language != null) {
 			switch (language) {
 				case "de":

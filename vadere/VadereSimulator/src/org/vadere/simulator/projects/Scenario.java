@@ -1,9 +1,14 @@
 package org.vadere.simulator.projects;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.vadere.meshing.mesh.gen.PFace;
+import org.vadere.meshing.mesh.gen.PHalfEdge;
+import org.vadere.meshing.mesh.gen.PVertex;
 import org.vadere.simulator.projects.dataprocessing.DataProcessingJsonManager;
 import org.vadere.simulator.projects.io.JsonConverter;
 import org.vadere.state.attributes.Attributes;
+import org.vadere.state.attributes.AttributesPsychology;
 import org.vadere.state.attributes.AttributesSimulation;
 import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.Topography;
@@ -64,9 +69,9 @@ public class Scenario {
 	 */
 	public void setSimulationRunning(boolean simulationRunning) {
 		if (simulationRunning){
-			simulationScenarioStore = copyScenarioStore();
+			this.simulationScenarioStore = copyScenarioStore();
 		} else {
-			simulationScenarioStore = null;
+			this.simulationScenarioStore = null;
 		}
 		this.simulationRunning = simulationRunning;
 	}
@@ -78,8 +83,6 @@ public class Scenario {
 			throw  new RuntimeException();
 		}
 	}
-
-
 
 	public void saveChanges() { // get's called by VadereProject.saveChanges on init
 		savedStateSerialized = JsonConverter.serializeScenarioRunManager(this);
@@ -131,6 +134,10 @@ public class Scenario {
 		return scenarioStore.getAttributesSimulation();
 	}
 
+	public AttributesPsychology getAttributesPsychology() {
+		return scenarioStore.getAttributesPsychology();
+	}
+
 	public Topography getTopography() {
 		return scenarioStore.getTopography();
 	}
@@ -145,6 +152,10 @@ public class Scenario {
 
 	public void setAttributesSimulation(@NotNull final AttributesSimulation attributesSimulation) {
 		this.scenarioStore.setAttributesSimulation(attributesSimulation);
+	}
+
+	public void setAttributesPsychology(@NotNull final AttributesPsychology attributesPsychology) {
+		this.scenarioStore.setAttributesPsychology(attributesPsychology);
 	}
 
 	public void setTopography(@NotNull final Topography topography) {

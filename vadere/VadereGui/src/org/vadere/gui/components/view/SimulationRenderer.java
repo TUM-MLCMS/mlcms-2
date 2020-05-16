@@ -3,9 +3,10 @@ package org.vadere.gui.components.view;
 import org.jetbrains.annotations.NotNull;
 import org.vadere.gui.components.model.SimulationModel;
 import org.vadere.gui.components.utils.CLGaussianCalculator;
-import org.vadere.gui.components.utils.Resources;
+import org.vadere.gui.postvisualization.model.PostvisualizationModel;
 import org.vadere.gui.renderer.agent.AgentRender;
 import org.vadere.state.scenario.Agent;
+import org.vadere.state.scenario.Pedestrian;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VRectangle;
 import org.vadere.util.geometry.shapes.VTriangle;
@@ -22,7 +23,6 @@ import java.util.stream.Stream;
 public abstract class SimulationRenderer extends DefaultRenderer {
 
     private static Logger logger = Logger.getLogger(SimulationRenderer.class);
-    private static Resources resources = Resources.getInstance("postvisualization");
 
     private static double MAX_POTENTIAL = 1000.0;
     private static double CONTOUR_STEP = 2.0;
@@ -91,6 +91,10 @@ public abstract class SimulationRenderer extends DefaultRenderer {
 			renderScenarioElement(model.getTopography().getTargets(), graphics, model.config.getTargetColor());
 		}
 
+        if (model.config.isShowTargetChangers()) {
+            renderScenarioElement(model.getTopography().getTargetChangers(), graphics, model.config.getTargetChangerColor());
+        }
+
         if (model.config.isShowAbsorbingAreas()) {
             renderScenarioElement(model.getTopography().getAbsorbingAreas(), graphics, model.config.getAbsorbingAreaColor());
         }
@@ -124,11 +128,11 @@ public abstract class SimulationRenderer extends DefaultRenderer {
         graphics.dispose();
     }
 
-    protected void renderTrajectory(final Graphics2D g, final java.util.List<VPoint> points, final Agent pedestrain) {
+    protected void renderTrajectory(final Graphics2D g, final java.util.List<VPoint> points, final Pedestrian pedestrain) {
         renderTrajectory(g, points.stream(), pedestrain);
     }
 
-    protected void renderTrajectory(final Graphics2D g, final Stream<VPoint> points, final Agent pedestrain) {
+    protected void renderTrajectory(final Graphics2D g, final Stream<VPoint> points, final Pedestrian pedestrain) {
         Color color = g.getColor();
         Stroke stroke = g.getStroke();
 
@@ -139,8 +143,10 @@ public abstract class SimulationRenderer extends DefaultRenderer {
             g.setStroke(new BasicStroke(getLineWidth() / 4.0f));
         }
 
+        VPoint endPos = model.config.isInterpolatePositions() ? pedestrain.getInterpolatedFootStepPosition(model.getSimTimeInSec()) : pedestrain.getPosition();
         Path2D.Double path = new Path2D.Double();
-        path.moveTo(pedestrain.getPosition().getX(), pedestrain.getPosition().getY());
+        path.moveTo(
+		        endPos.getX(), endPos.getY());
         points.forEachOrdered(
                 p -> path.lineTo(p.getX(), p.getY()));
 
@@ -200,7 +206,7 @@ public abstract class SimulationRenderer extends DefaultRenderer {
 
 	    double maxDistance = Math.sqrt(model.getTopography().getBounds().getWidth() * model.getTopography().getBounds().getWidth() +
 			    model.getTopography().getBounds().getHeight() * model.getTopography().getBounds().getHeight());
-	    colorHelper = new ColorHelper((int)(maxDistance * 0.7));
+	    colorHelper = new ColorHelper((int)(maxDistance));
 
         for (int x = 0; x < potentialFieldImage.getWidth(); x++) {
             for (int y = 0; y < potentialFieldImage.getHeight(); y++) {
@@ -282,11 +288,32 @@ public abstract class SimulationRenderer extends DefaultRenderer {
 
     public Color getPedestrianColor(@NotNull final Agent agent) {
 	    int targetId = agent.hasNextTarget() ? agent.getNextTargetId() : -1;
-	    if (model.config.isUseRandomPedestrianColors()) {
-		   return model.config.getRandomColor(agent.getId());
-	    }
 
-	    return model.config.getColorByTargetId(targetId)
-			    .orElseGet(model.config::getPedestrianColor);
+	    switch (model.config.getAgentColoring()) {
+		    case TARGET:
+		        return model.config.getColorByTargetId(targetId).orElseGet(model.config::getPedestrianDefaultColor);
+		    case RANDOM:
+		        return model.config.getRandomColor(agent.getId());
+            case SELF_CATEGORY:
+                if (agent instanceof Pedestrian) {
+                    Pedestrian pedestrian = (Pedestrian) agent;
+                    return model.config.getSelfCategoryColor(pedestrian.getSelfCategory());
+                }
+		    case PREDICATE: {
+		    	if (model instanceof PostvisualizationModel) {
+				    return ((PostvisualizationModel) model)
+                            .getPredicateColoringModel()
+                            .getColorByPredicate(agent)
+						    .orElse(model.config.getPedestrianColor());
+			    }
+		    }
+		    case GROUP: {
+			    if (agent instanceof Pedestrian) {
+				    return model.getGroupColor((Pedestrian)agent);
+			    }
+		    }
+		    default: return model.config.getPedestrianColor();
+
+	    }
     }
 }

@@ -1,0 +1,2 @@
+timeStep pedestrianId overlapPedestrianId distance-PID6 overlaps-PID6
+38 18 20 0.3878322356381921 0.0021677643618079334

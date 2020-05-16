@@ -1,6 +1,6 @@
 package org.vadere.simulator.projects.dataprocessing.processor;
 
-import org.vadere.simulator.control.SimulationState;
+import org.vadere.simulator.control.simulation.SimulationState;
 import org.vadere.simulator.projects.dataprocessing.datakey.TimestepKey;
 import org.vadere.state.attributes.processor.AttributesAreaDensityCountingProcessor;
 import org.vadere.state.attributes.processor.AttributesProcessor;
@@ -18,6 +18,7 @@ import org.vadere.annotation.factories.dataprocessors.DataProcessorClass;
  * description of what the processor does.
  * See e.g. AreaDensityVoronoiProcessor / AreaDensityVoronoiAlgorithm
  */
+
 @DataProcessorClass(label = "AreaDensityCountingProcessor")
 public class AreaDensityCountingProcessor extends AreaDataProcessor<Integer>  {
 

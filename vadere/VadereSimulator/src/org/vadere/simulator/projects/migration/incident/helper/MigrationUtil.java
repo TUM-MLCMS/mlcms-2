@@ -1,6 +1,6 @@
 package org.vadere.simulator.projects.migration.incident.helper;
 
-import org.vadere.simulator.entrypoints.Version;
+import org.vadere.util.version.Version;
 import org.vadere.simulator.projects.migration.MigrationAssistant;
 import org.vadere.simulator.projects.migration.MigrationException;
 import org.vadere.simulator.projects.migration.MigrationOptions;
@@ -30,8 +30,8 @@ public class MigrationUtil {
 
 	public MigrationUtil() {
 		dirMarker = createList("DO_NOT_MIGRATE", ".DO_NOT_MIGRATE");
-		treeMarker = createList("DO_NOT_MIGRATE_TREE", ".DO_NOT_MIGRATE_TREE");
-		ignoreDirs = createList("VadereModelTests", "target", "Documentation");
+		treeMarker = createList("DO_NOT_MIGRATE_TREE", ".DO_NOT_MIGRATE_TREE", IOUtils.CORRUPT_DIR, IOUtils.LEGACY_DIR);
+		ignoreDirs = createList("Scenarios", "target", "Documentation");
 	}
 
 	public static void main(String[] args) throws URISyntaxException, IOException {

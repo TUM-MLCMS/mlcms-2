@@ -4,8 +4,37 @@ package org.vadere.gui.projectview.view;
 import org.jetbrains.annotations.NotNull;
 import org.vadere.gui.components.utils.Messages;
 import org.vadere.gui.postvisualization.control.Player;
-import org.vadere.gui.projectview.VadereApplication;
-import org.vadere.gui.projectview.control.*;
+import org.vadere.gui.projectview.control.ActionAddScenario;
+import org.vadere.gui.projectview.control.ActionCloneScenario;
+import org.vadere.gui.projectview.control.ActionCloseApplication;
+import org.vadere.gui.projectview.control.ActionCreateProject;
+import org.vadere.gui.projectview.control.ActionDeleteOutputDirectories;
+import org.vadere.gui.projectview.control.ActionDeleteScenarios;
+import org.vadere.gui.projectview.control.ActionEditScenarioDescription;
+import org.vadere.gui.projectview.control.ActionGenerateScenarioFromOutputFile;
+import org.vadere.gui.projectview.control.ActionInterruptScenarios;
+import org.vadere.gui.projectview.control.ActionLoadProject;
+import org.vadere.gui.projectview.control.ActionLoadRecentProject;
+import org.vadere.gui.projectview.control.ActionNextTimeStep;
+import org.vadere.gui.projectview.control.ActionOpenInExplorer;
+import org.vadere.gui.projectview.control.ActionOutputToScenario;
+import org.vadere.gui.projectview.control.ActionPauseScenario;
+import org.vadere.gui.projectview.control.ActionRenameOutputFile;
+import org.vadere.gui.projectview.control.ActionRenameProject;
+import org.vadere.gui.projectview.control.ActionRenameScenario;
+import org.vadere.gui.projectview.control.ActionResumeNormalSpeed;
+import org.vadere.gui.projectview.control.ActionRunAllScenarios;
+import org.vadere.gui.projectview.control.ActionRunOutput;
+import org.vadere.gui.projectview.control.ActionRunSelectedScenarios;
+import org.vadere.gui.projectview.control.ActionSaveAsProject;
+import org.vadere.gui.projectview.control.ActionSaveProject;
+import org.vadere.gui.projectview.control.ActionSeeDiscardChanges;
+import org.vadere.gui.projectview.control.ActionShowAboutDialog;
+import org.vadere.gui.projectview.control.ActionToClipboard;
+import org.vadere.gui.projectview.control.IOutputFileRefreshListener;
+import org.vadere.gui.projectview.control.IProjectChangeListener;
+import org.vadere.gui.projectview.control.ShowResultDialogAction;
+import org.vadere.gui.projectview.control.ToggleScenarioManagerAction;
 import org.vadere.gui.projectview.model.ProjectViewModel;
 import org.vadere.gui.projectview.model.ProjectViewModel.OutputBundle;
 import org.vadere.gui.projectview.model.ProjectViewModel.ScenarioBundle;
@@ -16,31 +45,34 @@ import org.vadere.simulator.projects.ProjectFinishedListener;
 import org.vadere.simulator.projects.Scenario;
 import org.vadere.simulator.projects.SingleScenarioFinishedListener;
 import org.vadere.simulator.projects.VadereProject;
+import org.vadere.util.config.VadereConfig;
 import org.vadere.util.io.IOUtils;
 import org.vadere.util.logging.Logger;
 import org.vadere.util.opencl.CLUtils;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.prefs.Preferences;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 /**
  * Main view of the Vadere GUI.
- *
- *
  */
 public class ProjectView extends JFrame implements ProjectFinishedListener, SingleScenarioFinishedListener,
 		IOutputFileRefreshListener, IProjectChangeListener {
@@ -49,7 +81,9 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 	 */
 	private static final long serialVersionUID = -2081363246241235943L;
 	private static Logger logger = Logger.getLogger(ProjectView.class);
-	/** Store a reference to the main window as "owner" parameter for dialogs. */
+	/**
+	 * Store a reference to the main window as "owner" parameter for dialogs.
+	 */
 	private static ProjectView mainWindow;
 
 	/**
@@ -59,19 +93,22 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 
 	/**
 	 * GUI elements (part of the view) of the {@link ProjectView}
-	 * 
-	 * TODO [priority=medium] [task=refactoring] do the actions have to be stored in member variables
-	 * or could it be better to store them locally where they are needed?
-	 * Some are used in different methods, maybe only store these as members?
+	 *
+	 * TODO [priority=medium] [task=refactoring] do the actions have to be stored in member
+	 * variables or could it be better to store them locally where they are needed? Some are used in
+	 * different methods, maybe only store these as members?
 	 */
 	private JPanel contentPane = new JPanel();
 	private JPanel controlPanel = new JPanel();
+	private JSplitPane mainSplitPanel = new JSplitPane();
 	private VTable scenarioTable;
 	private VTable outputTable;
 	private JButton btnRunSelectedScenario;
 	private JButton btnRunAllScenarios;
 	private JButton btnStopRunningScenarios;
 	private JButton btnPauseRunningScenarios;
+	private JButton btnNextSimulationStep;
+	private JButton btnResumeNormalSpeed;
 	private JMenu mntmRecentProjects;
 	private ProgressPanel progressPanel = new ProgressPanel();
 	private ScenarioPanel scenarioJPanel;
@@ -97,7 +134,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 	private void selectCurrentScenarioRunManager() {
 		int index = model.getProject().getScenarioIndexByName(model.getProject().getCurrentScenario());
 
-		if(index != -1) {
+		if (index != -1) {
 			scenarioTable.setRowSelectionInterval(index, index);
 		}
 	}
@@ -220,7 +257,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 	/**
 	 * Launch the application.
 	 */
-	public static void start() {
+	public static void start(String projectPath){
 		EventQueue.invokeLater(() -> {
 			try {
 				// Set Java L&F from system
@@ -236,14 +273,20 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 			frame.setVisible(true);
 			frame.setSize(1200, 800);
 
-			frame.openLastUsedProject(model);
+			frame.setIconImage(Toolkit.getDefaultToolkit()
+					.getImage(ProjectView.class.getResource("/icons/vadere-icon.png")));
+			if (projectPath.equals("")){
+				frame.openLastUsedProject(model);
+			} else {
+				frame.openProject(model, projectPath);
+			}
 			checkDependencies(frame);
 		});
 	}
 
 	private static void checkDependencies(@NotNull final JFrame frame) {
 		try {
-			if(!CLUtils.isOpenCLSupported()) {
+			if (!CLUtils.isOpenCLSupported()) {
 				JOptionPane.showMessageDialog(frame,
 						Messages.getString("ProjectView.warning.opencl.text"),
 						Messages.getString("ProjectView.warning.opencl.title"),
@@ -259,11 +302,19 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 
 	private void openLastUsedProject(final ProjectViewModel model) {
 		String lastUsedProjectPath =
-				Preferences.userNodeForPackage(VadereApplication.class).get("last_used_project", null);
-		if (lastUsedProjectPath != null) {
+				VadereConfig.getConfig().getString("History.lastUsedProject");
+		if (lastUsedProjectPath != null && lastUsedProjectPath.isBlank() == false) {
 			if (Files.exists(Paths.get(lastUsedProjectPath))) {
 				ActionLoadProject.loadProjectByPath(model, lastUsedProjectPath);
 			}
+		}
+	}
+
+	private void openProject(final  ProjectViewModel model, String projectPath) {
+		if (Files.exists(Paths.get(projectPath))) {
+			ActionLoadProject.loadProjectByPath(model, projectPath);
+		} else {
+			IOUtils.errorBox("No project under "+ projectPath, "Project not found");
 		}
 	}
 
@@ -288,6 +339,8 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		btnRunSelectedScenario.setVisible(!flag);
 		btnStopRunningScenarios.setVisible(flag);
 		btnPauseRunningScenarios.setVisible(flag);
+		btnNextSimulationStep.setVisible(flag);
+		btnResumeNormalSpeed.setVisible(flag);
 		scenarioTable.setEnabled(!flag);
 		scenarioTable.clearSelection();
 		outputTable.setEnabled(!flag);
@@ -323,7 +376,6 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		buildOutputTablePopup();
 		buildScenarioTablePopup(addScenarioAction);
 		buildToolBar();
-		buildRightSidePanel();
 
 		setScenariosRunning(false);
 
@@ -333,21 +385,20 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 				closeApplicationAction.actionPerformed(null);
 			}
 		});
-		Preferences pref = Preferences.userNodeForPackage(VadereApplication.class);
 		pack();
 	}
 
 	private void buildKeyboardShortcuts(ActionPauseScenario pauseScenarioAction, Action interruptScenariosAction) {
-	    addKeyboardShortcut("SPACE", "Typed Space", btnPauseRunningScenarios.getAction());
-	    addKeyboardShortcut("BACK_SPACE", "Typed Backspace", btnStopRunningScenarios.getAction());
+		addKeyboardShortcut("SPACE", "Typed Space", btnPauseRunningScenarios.getAction());
+		addKeyboardShortcut("BACK_SPACE", "Typed Backspace", btnStopRunningScenarios.getAction());
 	}
 
-    private void addKeyboardShortcut(String key, String actionKey, Action action) {
-	    controlPanel.getInputMap().put(KeyStroke.getKeyStroke(key), actionKey);
-	    controlPanel.getActionMap().put(actionKey, action);
-    }
+	private void addKeyboardShortcut(String key, String actionKey, Action action) {
+		controlPanel.getInputMap().put(KeyStroke.getKeyStroke(key), actionKey);
+		controlPanel.getActionMap().put(actionKey, action);
+	}
 
-    private void buildMenuBar(ActionCloseApplication closeApplicationAction, ActionAddScenario addScenarioAction) {
+	private void buildMenuBar(ActionCloseApplication closeApplicationAction, ActionAddScenario addScenarioAction) {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
@@ -397,12 +448,17 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 
 		// Checkbox menu item to turn off result dialog of project run.
 		mnFile.addSeparator();
-		boolean showDialogDefault = Preferences.userNodeForPackage(VadereApplication.class)
-				.getBoolean("Project.simulationResult.show", false);
-		JCheckBoxMenuItem showResultDialogMenu = new JCheckBoxMenuItem(Messages.getString("ProjectView.mntmSimulationResult.text"), null, showDialogDefault);
+		JCheckBoxMenuItem showResultDialogMenu = new JCheckBoxMenuItem(Messages.getString("ProjectView.mntmSimulationResult.text"), null, model.getShowSimulationResultDialog());
 		Action showResultDialogMenuAction = new ShowResultDialogAction(Messages.getString("ProjectView.mntmSimulationResult.text"), model, showResultDialogMenu);
 		showResultDialogMenu.setAction(showResultDialogMenuAction);
 		mnFile.add(showResultDialogMenu);
+
+		// Checkbox menu item to turn off Scenario Checker during  topography creation
+		JCheckBoxMenuItem toggleScenarioCheckerDialogMenu = new JCheckBoxMenuItem(Messages.getString("ProjectView.btnToggleScenarioChecker.text"), null, model.getShowSimulationResultDialog());
+		Action toggleScenarioCheckerMenuAction = new ToggleScenarioManagerAction(Messages.getString("ProjectView.btnToggleScenarioChecker.text"), model, toggleScenarioCheckerDialogMenu);
+		toggleScenarioCheckerDialogMenu.setAction(toggleScenarioCheckerMenuAction);
+		mnFile.add(toggleScenarioCheckerDialogMenu);
+
 
 		JMenuItem mntmExit = new JMenuItem(closeApplicationAction);
 		mnFile.addSeparator();
@@ -436,6 +492,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		JRadioButtonMenuItem mntmEnglishLocale =
 				new JRadioButtonMenuItem(new AbstractAction(Messages.getString("ProjectView.mntmEnglishLocale.text")) {
 					private static final long serialVersionUID = 1L;
+
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						Messages.changeLanguage(Locale.ENGLISH);
@@ -445,6 +502,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		JRadioButtonMenuItem mntmGermanLocale =
 				new JRadioButtonMenuItem(new AbstractAction(Messages.getString("ProjectView.mntmGermanLocale.text")) {
 					private static final long serialVersionUID = 1L;
+
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						Messages.changeLanguage(Locale.GERMAN);
@@ -461,6 +519,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 
 		JMenuItem mntmReapplyMigration = new JMenuItem(new AbstractAction(Messages.getString("ProjectView.mntmReapplyMigration.text")) {
 			private static final long serialVersionUID = 1L;
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				(new ActionLoadProject(Messages.getString("ProjectView.mntmLoadTestProject.text"), model)).loadProject(true);
@@ -486,7 +545,6 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		contentPane.setLayout(new BorderLayout(0, 0));
 
 		JPanel panel_1 = new JPanel();
-		contentPane.add(panel_1, BorderLayout.WEST);
 		panel_1.setLayout(new BorderLayout(0, 0));
 
 		panel_1.add(progressPanel, BorderLayout.SOUTH);
@@ -498,10 +556,8 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		outputTable = model.createOutputTable();
 
 		buildScenarioTable(outputTableRenderer);
-		contentPane.add(scenarioTable.getTableHeader(), BorderLayout.CENTER);
 
 		buildOutputTable(outputTableRenderer);
-		contentPane.add(outputTable.getTableHeader(), BorderLayout.CENTER);
 
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setResizeWeight(0.6);
@@ -519,6 +575,28 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		panel_1.add(controlPanel, BorderLayout.NORTH);
 		FlowLayout fl_controlPanel = (FlowLayout) controlPanel.getLayout();
 		fl_controlPanel.setAlignment(FlowLayout.LEFT);
+
+		JPanel panel_2 = buildRightSidePanel();
+
+		mainSplitPanel = new JSplitPane();
+		((BasicSplitPaneUI) mainSplitPanel.getUI()).getDivider().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					mainSplitPanel.setDividerLocation(scenarioTable.getSize().width + 5);
+				}
+			}
+		});
+		mainSplitPanel.setResizeWeight(0.4);
+		mainSplitPanel.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+		JScrollPane panel_1_scroll = new JScrollPane(panel_1);
+		panel_1_scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+		panel_1.setMinimumSize(new Dimension(1, 1));
+		panel_2.setMinimumSize(new Dimension(1, 1));
+		mainSplitPanel.setLeftComponent(panel_1_scroll);
+		mainSplitPanel.setRightComponent(panel_2);
+		mainSplitPanel.resetToPreferredSizes();
+		contentPane.add(mainSplitPanel, BorderLayout.CENTER);
 	}
 
 	private void buildScenarioTable(OutputTableRenderer outputTableRenderer) {
@@ -533,13 +611,13 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 				ScenarioBundle bundle = model.getSelectedScenarioBundle();
 
 				model.setCurrentScenario(bundle.getScenario());
-                logger.info(String.format("selected scenario '%s'", bundle.getScenario().getName()));
+				logger.info(String.format("selected scenario '%s'", bundle.getScenario().getName()));
 
-                scenarioJPanel.setScenario(bundle.getScenario(), true);
+				scenarioJPanel.setScenario(bundle.getScenario(), true);
 
 				outputTableRenderer.setMarkedOutputFiles(bundle.getOutputDirectories());
 				outputTable.repaint(); // make cell renderer mark associated outputs
-                logger.info("repainted output table");
+				logger.info("repainted output table");
 			}
 		});
 		scenarioTable.setDefaultRenderer(Object.class, new ScenarioTableRenderer(model));
@@ -611,7 +689,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 							new ActionToClipboard(outDir.getName() + "/", outDir.getAbsolutePath()))
 					);
 					File[] children = outDir.listFiles();
-					if (children != null){
+					if (children != null) {
 						for (File file : children) {
 							String name = file.isDirectory() ? "---*" + file.getName() + "/" : "---*" + file.getName();
 							copyPath.add(new JMenuItem(
@@ -626,7 +704,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 			}
 		});
 
-				outputListPopupMenu.add(copyPath);
+		outputListPopupMenu.add(copyPath);
 
 		JPopupMenu outputListPopupMenuMultiSelect = new JPopupMenu();
 		outputListPopupMenuMultiSelect.add(new JMenuItem(deleteOutputFileAction));
@@ -698,6 +776,13 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		btnStopRunningScenarios = new JButton(interruptScenariosAction);
 		toolBar.add(btnStopRunningScenarios);
 
+		ActionResumeNormalSpeed resumeNormalSpeedAction =
+				new ActionResumeNormalSpeed(Messages.getString("ProjectView.btnResumeNormalSpeed.text"), model);
+		resumeNormalSpeedAction.putValue(Action.LARGE_ICON_KEY,
+				new ImageIcon(ProjectView.class.getResource("/icons/greenarrow_right_small.png")));
+		btnResumeNormalSpeed = new JButton(resumeNormalSpeedAction);
+		toolBar.add(btnResumeNormalSpeed);
+
 		ActionPauseScenario pauseScenarioAction =
 				new ActionPauseScenario(Messages.getString("ProjectView.btnPauseRunningTests.text"), model);
 		pauseScenarioAction.putValue(Action.LONG_DESCRIPTION,
@@ -711,10 +796,18 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 				KeyStroke.getKeyStroke(Messages.getString("ProjectView.pauseTests.shortcut").charAt(0)), "pauseTests");
 		toolBar.getActionMap().put("pauseTests", pauseScenarioAction);
 
+		ActionNextTimeStep nextTimeStepAction =
+				new ActionNextTimeStep(Messages.getString("ProjectView.btnNextSimulationStep"), model);
+		nextTimeStepAction.putValue(Action.LONG_DESCRIPTION, "Next Step");
+		nextTimeStepAction.putValue(Action.LARGE_ICON_KEY,
+				new ImageIcon(ProjectView.class.getResource("/icons/greenarrow_step.png")));
+		btnNextSimulationStep = new JButton(nextTimeStepAction);
+		toolBar.add(btnNextSimulationStep);
+
 		buildKeyboardShortcuts(pauseScenarioAction, interruptScenariosAction);
 	}
 
-	private void buildRightSidePanel() {
+	private JPanel buildRightSidePanel() {
 		JPanel rightSidePanel = new JPanel();
 		rightSidePanel.setLayout(new BorderLayout(0, 0));
 		contentPane.add(rightSidePanel, BorderLayout.CENTER);
@@ -726,6 +819,7 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 		model.setScenarioNamePanel(scenarioNamePanel); // TODO [priority=low] [task=refactoring] breaking mvc pattern (?) - but I need access to refresh the scenarioName
 		model.addProjectChangeListener(scenarioJPanel);
 		rightSidePanel.add(scenarioJPanel, BorderLayout.CENTER);
+		return rightSidePanel;
 	}
 
 	private void addToProjectSpecificActions(Action action) {
@@ -740,23 +834,22 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 
 	public void updateRecentProjectsMenu() {
 		mntmRecentProjects.removeAll();
-		String str = Preferences.userNodeForPackage(VadereApplication.class).get("recent_projects", "");
+		java.util.List<String> recentProjectPaths = VadereConfig.getConfig().getList(String.class, "History.recentProjects", Collections.EMPTY_LIST);
 		boolean hasEntry = false;
-		if (str.length() > 0) {
-			for (String path : str.split(",")) {
-				if (Files.exists(Paths.get(path))) { // show only those that still exist
-					if (model.getCurrentProjectPath() != null) {
-						if (!model.getCurrentProjectPath().equals(Paths.get(path).getParent().toString())) { // when project loaded, hide that from recent list
-							addRecentProjectsMenuItem(path);
-							hasEntry = true;
-						}
-					} else { // no project loaded, show all from recent list
+		for (String path : recentProjectPaths) {
+			if (Files.exists(Paths.get(path))) { // show only those that still exist
+				if (model.getCurrentProjectPath() != null) {
+					if (!model.getCurrentProjectPath().equals(Paths.get(path).getParent().toString())) { // when project loaded, hide that from recent list
 						addRecentProjectsMenuItem(path);
 						hasEntry = true;
 					}
+				} else { // no project loaded, show all from recent list
+					addRecentProjectsMenuItem(path);
+					hasEntry = true;
 				}
 			}
 		}
+
 		mntmRecentProjects.setEnabled(hasEntry);
 	}
 
@@ -771,5 +864,14 @@ public class ProjectView extends JFrame implements ProjectFinishedListener, Sing
 
 	public void updateScenarioJPanel() {
 		scenarioJPanel.updateScenario();
+	}
+
+	@Override
+	public void validate() {
+		int max_div = scenarioTable.getSize().width + 25;
+		super.validate();
+		if (mainSplitPanel.getDividerLocation() > max_div) {
+			mainSplitPanel.setDividerLocation(max_div);
+		}
 	}
 }

@@ -1,11 +1,5 @@
 package org.vadere.simulator.models.reynolds;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-
 import org.jetbrains.annotations.NotNull;
 import org.vadere.annotation.factories.models.ModelClass;
 import org.vadere.simulator.models.MainModel;
@@ -16,16 +10,19 @@ import org.vadere.simulator.models.reynolds.behaviour.Seek;
 import org.vadere.simulator.models.reynolds.behaviour.Separation;
 import org.vadere.simulator.models.reynolds.behaviour.WallAvoidance;
 import org.vadere.simulator.models.reynolds.behaviour.Wander;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesReynolds;
 import org.vadere.state.attributes.scenario.AttributesAgent;
-import org.vadere.state.events.exceptions.UnsupportedEventException;
+import org.vadere.state.psychology.cognition.UnsupportedSelfCategoryException;
 import org.vadere.state.scenario.DynamicElement;
 import org.vadere.state.scenario.Pedestrian;
 import org.vadere.state.scenario.Topography;
-import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VShape;
+import org.vadere.util.geometry.shapes.Vector2D;
+
+import java.util.*;
 
 @ModelClass(isMainModel = true)
 public class ReynoldsSteeringModel implements MainModel {
@@ -33,7 +30,7 @@ public class ReynoldsSteeringModel implements MainModel {
 	private AttributesReynolds attributesReynolds;
 	private AttributesAgent attributesPedestrian;
 	private Random random;
-	private Topography topography;
+	private Domain domain;
 
 	private Seek bSeek;
 	private Separation bSeparation;
@@ -53,12 +50,12 @@ public class ReynoldsSteeringModel implements MainModel {
 	}
 
 	@Override
-	public void initialize(List<Attributes> modelAttributesList, Topography topography,
-			AttributesAgent attributesPedestrian, Random random) {
+	public void initialize(List<Attributes> modelAttributesList, Domain domain,
+	                       AttributesAgent attributesPedestrian, Random random) {
 
 		this.attributesReynolds = Model.findAttributes(modelAttributesList, AttributesReynolds.class);
 		this.attributesPedestrian = attributesPedestrian;
-		this.topography = topography;
+		this.domain = domain;
 		this.random = random;
 
 		submodels = Collections.singletonList(this);
@@ -73,9 +70,9 @@ public class ReynoldsSteeringModel implements MainModel {
 
 	@Override
 	public void update(final double simTimeInSec) {
-		Collection<Pedestrian> pedestrians = topography.getElements(Pedestrian.class);
+		Collection<Pedestrian> pedestrians = domain.getTopography().getElements(Pedestrian.class);
 
-		UnsupportedEventException.throwIfNotElapsedTimeEvent(pedestrians, this.getClass());
+		UnsupportedSelfCategoryException.throwIfPedestriansNotTargetOrientied(pedestrians, this.getClass());
 
 		Iterator<Pedestrian> it = pedestrians.iterator();
 		double maxSpeed = 3;
@@ -102,7 +99,7 @@ public class ReynoldsSteeringModel implements MainModel {
 	}
 
 	public Topography getScenario() {
-		return this.topography;
+		return this.domain.getTopography();
 	}
 
 	public AttributesAgent getAttributesPedestrian() {
@@ -115,10 +112,17 @@ public class ReynoldsSteeringModel implements MainModel {
 
 	@Override
 	public <T extends DynamicElement> Pedestrian createElement(VPoint position, int id, Class<T> type) {
+		return createElement(position, id, this.attributesPedestrian, type);
+	}
+
+	@Override
+	public <T extends DynamicElement> Pedestrian createElement(VPoint position, int id, Attributes attr, Class<T> type) {
+		AttributesAgent aAttr = (AttributesAgent)attr;
+
 		if (!Pedestrian.class.isAssignableFrom(type))
 			throw new IllegalArgumentException("RSM cannot initialize " + type.getCanonicalName());
 		AttributesAgent pedAttributes = new AttributesAgent(
-				attributesPedestrian, registerDynamicElementId(topography, id));
+				aAttr, registerDynamicElementId(domain.getTopography(), id));
 		Pedestrian result = create(position, pedAttributes);
 		return result;
 	}

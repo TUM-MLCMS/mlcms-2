@@ -1,7 +1,7 @@
 package org.vadere.simulator.projects.dataprocessing.processor;
 
 import org.vadere.annotation.factories.dataprocessors.DataProcessorClass;
-import org.vadere.simulator.control.SimulationState;
+import org.vadere.simulator.control.simulation.SimulationState;
 import org.vadere.simulator.projects.dataprocessing.ProcessorManager;
 import org.vadere.simulator.projects.dataprocessing.datakey.PedestrianIdKey;
 import org.vadere.state.attributes.processor.AttributesPedestrianLineCrossProcessor;
@@ -35,7 +35,7 @@ public class PedestrianLineCrossProcessor extends DataProcessor<PedestrianIdKey,
 		for(Pedestrian ped : peds) {
 			PedestrianIdKey key = new PedestrianIdKey(ped.getId());
 
-			for(FootStep footStep : ped.getFootSteps()) {
+			for(FootStep footStep : ped.getTrajectory()) {
 				if(footStep.intersects(line)) {
 					double intersectionTime = footStep.computeIntersectionTime(line);
 					this.putValue(key, intersectionTime);

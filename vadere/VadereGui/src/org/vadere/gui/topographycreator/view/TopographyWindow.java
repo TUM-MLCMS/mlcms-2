@@ -3,6 +3,7 @@ package org.vadere.gui.topographycreator.view;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
+import org.vadere.gui.components.control.ActionGeneratePoly;
 import org.vadere.gui.components.control.IViewportChangeListener;
 import org.vadere.gui.components.control.JViewportChangeListener;
 import org.vadere.gui.components.control.PanelResizeListener;
@@ -15,19 +16,20 @@ import org.vadere.gui.components.view.ScenarioToolBar;
 import org.vadere.gui.projectview.control.ActionDeselect;
 import org.vadere.gui.projectview.view.JsonValidIndicator;
 import org.vadere.gui.topographycreator.control.ActionBasic;
-import org.vadere.gui.topographycreator.control.ActionCloseDrawOptionPanel;
 import org.vadere.gui.topographycreator.control.ActionCopyElement;
 import org.vadere.gui.topographycreator.control.ActionDeleteElement;
 import org.vadere.gui.topographycreator.control.ActionInsertCopiedElement;
 import org.vadere.gui.topographycreator.control.ActionMaximizeSize;
 import org.vadere.gui.topographycreator.control.ActionMergeObstacles;
 import org.vadere.gui.topographycreator.control.ActionOpenDrawOptionMenu;
+import org.vadere.gui.topographycreator.control.ActionPlaceRandomPedestrians;
 import org.vadere.gui.topographycreator.control.ActionQuickSaveTopography;
 import org.vadere.gui.topographycreator.control.ActionRedo;
 import org.vadere.gui.topographycreator.control.ActionResetTopography;
 import org.vadere.gui.topographycreator.control.ActionResizeTopographyBound;
 import org.vadere.gui.topographycreator.control.ActionSelectCut;
 import org.vadere.gui.topographycreator.control.ActionSelectSelectShape;
+import org.vadere.gui.topographycreator.control.ActionSimplifyObstacles;
 import org.vadere.gui.topographycreator.control.ActionSubtractMeasurementArea;
 import org.vadere.gui.topographycreator.control.ActionSwitchCategory;
 import org.vadere.gui.topographycreator.control.ActionSwitchSelectionMode;
@@ -37,11 +39,10 @@ import org.vadere.gui.topographycreator.control.ActionTranslateTopography;
 import org.vadere.gui.topographycreator.control.ActionUndo;
 import org.vadere.gui.topographycreator.control.ActionZoomIn;
 import org.vadere.gui.topographycreator.control.ActionZoomOut;
-import org.vadere.gui.topographycreator.control.DrawDotMode;
 import org.vadere.gui.topographycreator.control.DrawConvexHullMode;
-import org.vadere.gui.topographycreator.control.DrawLineMode;
-import org.vadere.gui.topographycreator.control.DrawSimplePolygonMode;
+import org.vadere.gui.topographycreator.control.DrawDotMode;
 import org.vadere.gui.topographycreator.control.DrawRectangleMode;
+import org.vadere.gui.topographycreator.control.DrawSimplePolygonMode;
 import org.vadere.gui.topographycreator.control.EraserMode;
 import org.vadere.gui.topographycreator.control.SelectElementMode;
 import org.vadere.gui.topographycreator.control.TopographyAction;
@@ -50,13 +51,17 @@ import org.vadere.gui.topographycreator.model.IDrawPanelModel;
 import org.vadere.gui.topographycreator.model.TopographyCreatorModel;
 import org.vadere.simulator.projects.Scenario;
 import org.vadere.state.types.ScenarioElementType;
+import org.vadere.util.config.VadereConfig;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEditSupport;
 
@@ -69,16 +74,21 @@ public class TopographyWindow extends JPanel {
 	private InfoPanel infoPanel;
 	private TopographyPanel mainPanel;
 	private JLabelObserver selectedElementLabel;
+	private JTabbedPane tabbedInfoPanel;
+
+
+
 	private UndoableEditSupport undoSupport;
 	private UndoManager undoManager;
 
 	public TopographyWindow(final Scenario currentScenario) {
 
 		toolbar = new ScenarioToolBar("Toolbar");
-		int toolbarSize = Integer.parseInt(resources.getProperty("Toolbar.size"));
-		toolbar.setPreferredSize(new Dimension(toolbarSize, toolbarSize));
-		toolbar.setBorderPainted(false);
-		toolbar.setFloatable(false);
+		int toolbarSize = VadereConfig.getConfig().getInt("Gui.toolbar.size");
+		Dimension prefSize = new Dimension(toolbarSize, toolbarSize);
+		//toolbar.setPreferredSize(prefSize);
+		toolbar.setBorderPainted(true);
+		toolbar.setFloatable(true);
 		toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
 		toolbar.setAlignmentY(Component.TOP_ALIGNMENT);
 
@@ -119,9 +129,22 @@ public class TopographyWindow extends JPanel {
 		selectedElementLabel = new JLabelObserver(JLabelObserver.DEFAULT_TEXT);
 
 		JsonValidIndicator jsonValidIndicator = new JsonValidIndicator();
-		final ScenarioElementView textView = new ScenarioElementView(panelModel, jsonValidIndicator, selectedElementLabel);
+		ScenarioElementView scenarioElementView = new ScenarioElementView(panelModel, jsonValidIndicator, selectedElementLabel);
+		TopographyTreeView topographyTreeView = new TopographyTreeView(panelModel);
 
 		final JPanel thisPanel = this;
+
+		// TabbedPane
+		tabbedInfoPanel = new JTabbedPane(SwingConstants.TOP);
+		tabbedInfoPanel.addTab("SelectedElment", scenarioElementView);
+		tabbedInfoPanel.addTab("ElementTree", topographyTreeView);
+		tabbedInfoPanel.addChangeListener(e ->{
+			int index = tabbedInfoPanel.getSelectedIndex();
+			if (index == 1){
+				topographyTreeView.update(null, null);
+			}
+
+		});
 
 
 		// 1. get data from the user screen
@@ -179,7 +202,6 @@ public class TopographyWindow extends JPanel {
 		panelModel.addViewportChangeListener(viewportChangeListener);
 		panelModel.addScrollPane(scrollPane);
 
-		// mainPanel.setPreferredSize(new Dimension(windowWidth, windowHeight));
 		mainPanel = new TopographyPanel(panelModel, new TopographyCreatorRenderer(panelModel), scrollPane);
 		mainPanel.addComponentListener(new PanelResizeListener(panelModel));
 		mainPanel.setBorder(BorderFactory.createLineBorder(Color.red));
@@ -187,30 +209,38 @@ public class TopographyWindow extends JPanel {
 		panelModel.addObserver(mainPanel);
 		scrollPane.setViewportView(mainPanel);
 
-		/*
-		 * JPanel textViewPanel = new JPanel();
-		 * BorderLayout layoutManagerTextViewPanel = new BorderLayout();
-		 * textViewPanel.setLayout(layoutManagerTextViewPanel);
-		 */
-
 		selectedElementLabel.setPanelModel(panelModel);
 
-		// textViewPanel.add(selectedElementLabel, BorderLayout.PAGE_START);
-		// textViewPanel.add(textView, BorderLayout.CENTER);
-
 		panelModel.addObserver(infoPanel);
-		textView.setPreferredSize(new Dimension(1, windowHeight));
+		panelModel.addObserver(topographyTreeView);
+		scenarioElementView.setPreferredSize(new Dimension(1, windowHeight));
+		topographyTreeView.setPreferredSize(new Dimension(1, windowHeight));
 
 		panelModel.addObserver(selectedElementLabel);
 
+		scrollPane.setMinimumSize(new Dimension(1, 1));
+		scenarioElementView.setMinimumSize(new Dimension(1, 1));
+		topographyTreeView.setMinimumSize(new Dimension(1, 1));
+		JSplitPane splitPane = new JSplitPane();
+		((BasicSplitPaneUI) splitPane.getUI()).getDivider().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(e.getClickCount() == 2){
+					int newLocation = splitPane.getSize().width - (scenarioElementView.textWidth() + 65); // 65 magic number to take gutter into account
+					if (newLocation > 0)
+						splitPane.setDividerLocation(newLocation);
+				}
+			}
+		});
+
+		splitPane.setResizeWeight(0.8);
+		splitPane.resetToPreferredSizes();
+		splitPane.setLeftComponent(scrollPane);
+		splitPane.setRightComponent(tabbedInfoPanel);
+
 		thisPanel.add(toolbar, cc.xyw(2, 2, 4));
-		thisPanel.add(scrollPane, cc.xy(2, 4));
+		thisPanel.add(splitPane, cc.xyw(2, 4, 4));
 		thisPanel.add(infoPanel, cc.xyw(2, 6, 4));
-		// thisPanel.add(textViewPanel, cc.xy(4, 4));
-		thisPanel.add(textView, cc.xy(4, 4));
-
-
-
 
 		/* close dialog action */
 
@@ -231,6 +261,10 @@ public class TopographyWindow extends JPanel {
 		TopographyAction switchToTargetAction = new ActionSwitchCategory("switch to targets", panelModel,
 				ScenarioElementType.TARGET, selectRectangleAction);
 
+		/* switch category to target changer action */
+		TopographyAction switchToTargetChangerAction = new ActionSwitchCategory("switch to target changer", panelModel,
+				ScenarioElementType.TARGET_CHANGER, selectRectangleAction);
+
 		/* switch category to absorbing areas action */
 		TopographyAction switchToAbsorbingAreaAction = new ActionSwitchCategory("switch to absorbing areas", panelModel,
 				ScenarioElementType.ABSORBING_AREA, selectRectangleAction);
@@ -244,9 +278,14 @@ public class TopographyWindow extends JPanel {
 				"switch to measurement area", panelModel,
 				ScenarioElementType.MEASUREMENT_AREA, selectRectangleAction);
 
+		/* subtract obstacles from measurementArea */
 		Action subtractMeasurementAreaAction = new ActionSubtractMeasurementArea(Messages.getString("TopographyCreator.btnSubtractMeasurementArea.label"), new ImageIcon(Resources.class
 				.getResource("/icons/subtract.png")), panelModel, undoSupport);
 
+		/* Place Random Pedestrians */
+		Action placeRandomPedestrians = new ActionPlaceRandomPedestrians(Messages.getString(
+				"TopographyCreator.PlaceRandomPedestrians.label"), new ImageIcon(Resources.class
+				.getResource("/icons/pedestrians_rnd_icon.png")), panelModel, undoSupport);
 
 		/* list of actions for the sub-dialog */
 		Action pen = new ActionSwitchSelectionMode(
@@ -262,17 +301,18 @@ public class TopographyWindow extends JPanel {
 				.getResource("/icons/paint_method_rectangle_icon.png")), panelModel, new DrawRectangleMode(
 				panelModel, undoSupport),
 				basicAction);
-		Action dot = new ActionSwitchSelectionMode(Messages.getString("TopographyCreator.btnCircle.label"), new ImageIcon(Resources.class
+		Action dot = new ActionSwitchSelectionMode(Messages.getString("TopographyCreator.btnPedestrian.label"), new ImageIcon(Resources.class
 				.getResource("/icons/paint_method_dot_icon.png")), panelModel, new DrawDotMode(panelModel,
 				undoSupport),
 				basicAction);
-
 
 		List<Action> obstacleAndTargetDrawModes = new ArrayList<>();
 		List<Action> sourceDrawModes = new ArrayList<>();
 		List<Action> absorbingAreaDrawModes = new ArrayList<>();
 		List<Action> measurementAreaDrawModes = new ArrayList<>();
 		List<Action> measurementAreaMiscActions = new ArrayList<>();
+		List<Action> pedestrianDrawModes = new ArrayList<>();
+		List<Action> pedestrianMiscActions = new ArrayList<>();
 
 		obstacleAndTargetDrawModes.add(rectangle);
 		obstacleAndTargetDrawModes.add(pen);
@@ -292,6 +332,9 @@ public class TopographyWindow extends JPanel {
 		absorbingAreaDrawModes.add(pen);
 		absorbingAreaDrawModes.add(pen2);
 
+		pedestrianDrawModes.add(dot);
+		pedestrianMiscActions.add(placeRandomPedestrians);
+
 		/* open obstacle paint method dialog action */
 		JButton obsButton = new JButton();
 		TopographyAction openObstacleDialog = new ActionOpenDrawOptionMenu(
@@ -303,6 +346,11 @@ public class TopographyWindow extends JPanel {
 		JButton targetButton = new JButton();
 		TopographyAction openTargetDialog = new ActionOpenDrawOptionMenu("Target", new ImageIcon(Resources.class
 				.getResource("/icons/target_icon.png")), panelModel, switchToTargetAction, targetButton,
+				obstacleAndTargetDrawModes);
+
+		JButton targetChangerButton = new JButton();
+		TopographyAction openTargetChangerDialog = new ActionOpenDrawOptionMenu("TargetChanger", new ImageIcon(Resources.class
+				.getResource("/icons/target_changer_icon.png")), panelModel, switchToTargetChangerAction, targetChangerButton,
 				obstacleAndTargetDrawModes);
 
 		/* open absorbing area paint method dialog action */
@@ -327,10 +375,11 @@ public class TopographyWindow extends JPanel {
 		/* pedestrians */
 		TopographyAction switchToPedestrianAction = new ActionSwitchCategory("switch to pedestrian", panelModel,
 				ScenarioElementType.PEDESTRIAN, selectDotModeAction);
-		TopographyAction closeDialogAction = new ActionCloseDrawOptionPanel("Pedestrian", new ImageIcon(
-				Resources.class.getResource("/icons/pedestrians_icon.png")), panelModel,
-				switchToPedestrianAction);
 
+		JButton pedestrianButton = new JButton();
+		TopographyAction openPedestrianDialog = new ActionOpenDrawOptionMenu("Pedestrian", new ImageIcon(Resources.class
+				.getResource("/icons/pedestrians_icon.png")), panelModel, switchToPedestrianAction, pedestrianButton,
+				pedestrianDrawModes, pedestrianMiscActions);
 
 		/* switch category to source action */
 		TopographyAction switchToSourceAction = new ActionSwitchCategory("switch to source", panelModel,
@@ -350,6 +399,10 @@ public class TopographyWindow extends JPanel {
 				new ImageIcon(Resources.class.getResource("/icons/topography_icon.png")),
 				panelModel, selectShape, undoSupport);
 
+		TopographyAction simplifyObstacle = new ActionSimplifyObstacles("Simplify",
+				new ImageIcon(Resources.class.getResource("/icons/merge_convex.png")),
+				panelModel, selectShape, undoSupport);
+
 		TopographyAction translateTopography =new ActionTranslateTopography("TranslateTopography",
 				new ImageIcon(Resources.class.getResource("/icons/translation_icon.png")),
 				panelModel, selectShape, undoSupport);
@@ -364,9 +417,11 @@ public class TopographyWindow extends JPanel {
 						new ImageIcon(Resources.class.getResource("/icons/auto_generate_ids.png")),
 						panelModel);
 
-//		/* Topography checker*/
-//		ActionScenarioChecker actionScenarioChecker =
-//				new ActionScenarioChecker("ScenarioChecker", panelModel, jsonValidIndicator);
+		int iconHeight = VadereConfig.getConfig().getInt("ProjectView.icon.height.value");
+		int iconWidth = VadereConfig.getConfig().getInt("ProjectView.icon.width.value");
+		AbstractAction polyImg = new ActionGeneratePoly(Messages.getString("ProjectView.btnPolySnapshot.tooltip"),
+				resources.getIcon("camera_poly.png", iconWidth, iconHeight),
+				panelModel);
 
 
 		/* create toolbar*/
@@ -384,11 +439,13 @@ public class TopographyWindow extends JPanel {
 		addActionToToolbar(toolbar, openTargetDialog, "TopographyCreator.btnInsertTarget.tooltip",
 				targetButton);
 		toolbar.addSeparator(new Dimension(5, 50));
+		addActionToToolbar(toolbar, openTargetChangerDialog, "TopographyCreator.btnInsertTargetChanger.tooltip",
+				targetChangerButton);
 		addActionToToolbar(toolbar, openObstacleDialog, "TopographyCreator.btnInsertObstacle.tooltip",
 				obsButton);
 		addActionToToolbar(toolbar, openAbsorbingAreaDialog, "TopographyCreator.btnInsertAbsorbingArea.tooltip",
 				absorbingAreaButton);
-		addActionToToolbar(toolbar, closeDialogAction, "TopographyCreator.btnInsertPedestrian.tooltip");
+		addActionToToolbar(toolbar, openPedestrianDialog, "TopographyCreator.btnInsertPedestrian.tooltip", pedestrianButton);
 		addActionToToolbar(toolbar, openStairsDialog, "TopographyCreator.btnInsertStairs.tooltip",
 				stairsButton);
 		addActionToToolbar(toolbar, openMeasurementAreaDialog,
@@ -403,19 +460,20 @@ public class TopographyWindow extends JPanel {
 		// "TopographyCreator.btnMinimizeTopography.tooltip");
 		addActionToToolbar(toolbar, maximizeAction, "TopographyCreator.btnMaximizeTopography.tooltip");
 		addActionToToolbar(toolbar, resizeTopographyBound, "TopographyCreator.btnTopographyBound.tooltip");
+		addActionToToolbar(toolbar, simplifyObstacle, "TopographyCreator.btnSimplifyObstacle.tooltip");
 		addActionToToolbar(toolbar, translateTopography, "TopographyCreator.btnTranslation.tooltip");
 		addActionToToolbar(toolbar, translateElements, "TopographyCreator.btnElementTranslation.tooltip");
 		toolbar.addSeparator(new Dimension(5, 50));
 		addActionToToolbar(toolbar, selectCutAction, "TopographyCreator.btnCutTopography.tooltip");
 		addActionToToolbar(toolbar, resetScenarioAction, "TopographyCreator.btnNewTopography.tooltip");
 		addActionToToolbar(toolbar, saveScenarioAction, "TopographyCreator.btnQuickSave.tooltip");
+		addActionToToolbar(toolbar, polyImg, "TopographyCreator.btnGeneratePoly.tooltip");
 
 		toolbar.addSeparator(new Dimension(5, 50));
 		addActionToToolbar(toolbar, undoAction, "TopographyCreator.btnUndo.tooltip");
 		addActionToToolbar(toolbar, redoAction, "TopographyCreator.btnRedo.tooltip");
 		toolbar.add(Box.createHorizontalGlue());
 		addActionToToolbar(toolbar, actionTopographyMakroMenu, "TopographyCreator.btnGenerateIds.tooltip");
-//		addActionToToolbar(toolbar, actionScenarioChecker, "TopographyCreator.btnChecker.tooltip");
 
 		mainPanel.setBorder(BorderFactory.createLineBorder(Color.red));
 
@@ -427,11 +485,11 @@ public class TopographyWindow extends JPanel {
 		getActionMap().put("copy-element", copyElementAction);
 
 		TopographyAction insertCopiedElementAction =
-				new ActionInsertCopiedElement("insert copied element", panelModel, undoSupport);
+				new ActionInsertCopiedElement("insertVertex copied element", panelModel, undoSupport);
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
 				KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
-				"insert-copied-element");
-		getActionMap().put("insert-copied-element", insertCopiedElementAction);
+				"insertVertex-copied-element");
+		getActionMap().put("insertVertex-copied-element", insertCopiedElementAction);
 
 		// delete element
 		TopographyAction deleteElement =

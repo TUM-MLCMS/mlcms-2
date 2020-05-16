@@ -3,7 +3,7 @@ package org.vadere.simulator.projects.migration.jsontranformation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import org.vadere.simulator.entrypoints.Version;
+import org.vadere.util.version.Version;
 import org.vadere.simulator.projects.migration.MigrationAssistant;
 import org.vadere.simulator.projects.migration.MigrationException;
 import org.vadere.simulator.projects.migration.MigrationLogger;
@@ -114,6 +114,9 @@ public class JsonMigrationAssistant extends MigrationAssistant {
 			logger.info(migrationLogger.last());
 			transformedNode = transform(transformedNode, v);
 		}
+		if (targetVersion.equals(Version.latest())){
+			transformedNode = AbstractJsonTransformation.addNewMembersWithDefaultValues(transformedNode);
+		}
 
 		try {
 			restLog();
@@ -190,6 +193,11 @@ public class JsonMigrationAssistant extends MigrationAssistant {
 				legacyDir = dir.getParent().resolve(LEGACY_DIR).resolve(OUTPUT_DIR).resolve(fileFolder);
 			}
 
+			// Ignore meshes
+			if(file.isDirectory() && file.getName().equals(IOUtils.MESH_DIR)) {
+				continue;
+			}
+
 			Path scenarioFilePath = Paths.get(file.getAbsolutePath());
 			try {
 				if (migrateScenario(scenarioFilePath, legacyDir, dirName)) {
@@ -231,8 +239,8 @@ public class JsonMigrationAssistant extends MigrationAssistant {
 
 		String parentPath = dirName.equals(SCENARIO_DIR) ? SCENARIO_DIR + "/" : OUTPUT_DIR + "/" + scenarioFilePath.getParent().getFileName().toString() + "/";
 
-		migrationLogger.info(">> analyzing JSON tree of scenario <" + parentPath + node.get("name").asText() + ">");
-		logger.info(migrationLogger.last());
+		migrationLogger.info("Analyzing scenario file " + parentPath + node.get("name").asText());
+		logger.debug(migrationLogger.last());
 
 		Version version;
 
@@ -271,13 +279,15 @@ public class JsonMigrationAssistant extends MigrationAssistant {
 		JsonNode transformedNode = node;
 		// apply all transformation from current to latest version.
 		for (Version v : Version.listToLatest(version)) {
-			migrationLogger.info("<" + node.get("name").asText() + "> Start Transform to Version: " + v.label());
-			logger.info(migrationLogger.last());
+			migrationLogger.info("<" + node.get("name").asText() + "> Transform to: " + v.label());
+			logger.debug(migrationLogger.last());
 			transformedNode = transform(transformedNode, v);
 		}
+		// will always be Version.latest()
+		transformedNode = AbstractJsonTransformation.addNewMembersWithDefaultValues(transformedNode);
 		if (legacyDir != null) {
-			migrationLogger.info("Scenario Migrated - OK. Move copy of old version to legacllyDir");
-			logger.info(migrationLogger.last());
+			migrationLogger.info("Migration successful. Move copy of old version to \"legacy\" directory");
+			logger.debug(migrationLogger.last());
 			moveFileAddExtension(scenarioFilePath, legacyDir, migrationOptions.getLegacyExtension(), false);
 		}
 		IOUtils.writeTextFile(scenarioFilePath.toString(), StateJsonConverter.serializeJsonNode(transformedNode));

@@ -5,13 +5,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.vadere.simulator.models.potential.fields.PotentialFieldDistanceEikonalEq;
 import org.vadere.simulator.models.potential.fields.PotentialFieldSingleTargetGrid;
+import org.vadere.simulator.projects.Domain;
+import org.vadere.simulator.utils.cache.ScenarioCache;
 import org.vadere.state.attributes.models.AttributesFloorField;
 import org.vadere.state.attributes.models.AttributesOSM;
 import org.vadere.state.attributes.models.AttributesPotentialCompact;
 import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.Topography;
 import org.vadere.state.util.StateJsonConverter;
-import org.vadere.state.util.TextOutOfNodeException;
 import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VRectangle;
 import org.vadere.util.logging.Logger;
@@ -124,7 +125,7 @@ public class TestCLOptimalStepsModel {
 
 	private AttributesFloorField attributesFloorField;
 	private AttributesOSM attributesOSM;
-	private List<CLOptimalStepsModel.PedestrianOpenCL> pedestrians;
+	private List<CLParallelOptimalStepsModel.PedestrianOpenCL> pedestrians;
 	private Topography topography;
 	private PotentialFieldDistanceEikonalEq obstacleDistancePotential;
 	private PotentialFieldSingleTargetGrid targetPotentialField;
@@ -146,7 +147,7 @@ public class TestCLOptimalStepsModel {
 	 */
 	@Ignore
 	@Before
-	public void setUp() throws IOException, TextOutOfNodeException {
+	public void setUp() throws IOException {
 		random = new Random();
 		maxStepSize = 0.2f;
 		numberOfElements = 256;
@@ -158,8 +159,8 @@ public class TestCLOptimalStepsModel {
 		bound = new VRectangle(topography.getBounds());
 		obstacleDistancePotential = new PotentialFieldDistanceEikonalEq(
 				topography.getObstacles().stream().map(obs -> obs.getShape()).collect(Collectors.toList()),
-				bound, attributesFloorField);
-		targetPotentialField = new PotentialFieldSingleTargetGrid(topography, attributesAgent, attributesFloorField, 1);
+				bound, attributesFloorField, ScenarioCache.empty());
+		targetPotentialField = new PotentialFieldSingleTargetGrid(new Domain(topography), attributesAgent, attributesFloorField, 1);
 		targetPotentialField.preLoop(0.4f);
 		pedestrians = new ArrayList<>();
 
@@ -167,36 +168,36 @@ public class TestCLOptimalStepsModel {
 			VPoint randomPosition = new VPoint(
 					(float)(bound.getMinX() + random.nextDouble() * bound.getWidth()),
 					(float)(bound.getMinY() + random.nextDouble() * bound.getHeight()));
-			CLOptimalStepsModel.PedestrianOpenCL pedestrian = new CLOptimalStepsModel.PedestrianOpenCL(randomPosition, maxStepSize);
+			CLParallelOptimalStepsModel.PedestrianOpenCL pedestrian = new CLParallelOptimalStepsModel.PedestrianOpenCL(randomPosition, maxStepSize);
 			pedestrians.add(pedestrian);
 		}
 
-		CLOptimalStepsModel.PedestrianOpenCL lastPedestrian = pedestrians.get(pedestrians.size()-1);
+		CLParallelOptimalStepsModel.PedestrianOpenCL lastPedestrian = pedestrians.get(pedestrians.size()-1);
 
-		CLOptimalStepsModel.PedestrianOpenCL pedestrian = new CLOptimalStepsModel.PedestrianOpenCL(lastPedestrian.position.add(new VPoint(0.01, 0.1)), maxStepSize);
+		CLParallelOptimalStepsModel.PedestrianOpenCL pedestrian = new CLParallelOptimalStepsModel.PedestrianOpenCL(lastPedestrian.position.add(new VPoint(0.01, 0.1)), maxStepSize);
 		pedestrians.add(pedestrian);
 	}
 
 	@Ignore
 	@Test
 	public void testIdentity() throws OpenCLException {
-		CLOptimalStepsModel clOptimalStepsModel = new CLOptimalStepsModel(
+		CLParallelOptimalStepsModel clOptimalStepsModel = new CLParallelOptimalStepsModel(
 				attributesOSM,
 				attributesFloorField,
 				new VRectangle(topography.getBounds()),
 				targetPotentialField.getEikonalSolver(),
-				obstacleDistancePotential.getEikonalSolver());
+				obstacleDistancePotential.getEikonalSolver(),
+				1.2);
 		// max step length + function width);
-		List<CLOptimalStepsModel.PedestrianOpenCL> result = clOptimalStepsModel.getNextSteps(pedestrians, attributesPotentialCompact.getPedPotentialWidth());
-
+		List<VPoint> result = clOptimalStepsModel.update();
 		for(int i = 0; i < numberOfElements; i++) {
-			logger.info("not equals for index = " + i + ": " + result.get(i).position + " -> " + result.get(i).newPosition);
+			logger.info("not equals for index = " + i + ": " + result.get(i) + " -> " + result.get(i));
 		}
 		// max step length + function width);
-		result = clOptimalStepsModel.getNextSteps(pedestrians, 				attributesPotentialCompact.getPedPotentialWidth());
+		result = clOptimalStepsModel.update();
 
 		for(int i = 0; i < numberOfElements; i++) {
-			logger.info("not equals for index = " + i + ": " + result.get(i).position + " -> " + result.get(i).newPosition);
+			logger.info("not equals for index = " + i + ": " + result.get(i) + " -> " + result.get(i));
 		}
 
 		//clOptimalStepsModel.clear();

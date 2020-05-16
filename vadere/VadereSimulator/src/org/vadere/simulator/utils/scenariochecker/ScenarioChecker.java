@@ -3,17 +3,12 @@ package org.vadere.simulator.utils.scenariochecker;
 import org.jetbrains.annotations.NotNull;
 import org.vadere.simulator.projects.Scenario;
 import org.vadere.simulator.utils.scenariochecker.checks.ScenarioCheckerTest;
+import org.vadere.simulator.utils.scenariochecker.checks.dataProcessors.CheckAreasInAreaDensityVoronoiProcessor;
 import org.vadere.simulator.utils.scenariochecker.checks.dataProcessors.DataProcessorsLinkedToMeasurementArea;
+import org.vadere.simulator.utils.scenariochecker.checks.models.CellularAutomatonSetupCheck;
+import org.vadere.simulator.utils.scenariochecker.checks.simulation.GroupSetupCheck;
 import org.vadere.simulator.utils.scenariochecker.checks.simulation.SimulationTimeStepLengthCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.PedestrianSpeedSetupCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.SourceMinRadiusCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.SourceSpawnSettingCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.StairTreadSanityCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.TopographyOffsetCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.TopographyOverlapCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.UniqueSourceIdCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.UnusedTargetsCheck;
-import org.vadere.simulator.utils.scenariochecker.checks.topography.ValidTargetsInSourceCheck;
+import org.vadere.simulator.utils.scenariochecker.checks.topography.*;
 import org.vadere.state.scenario.Topography;
 
 import java.util.PriorityQueue;
@@ -69,6 +64,9 @@ public class ScenarioChecker {
 		ret.addAll(checkMinSourceRadius());
 		ret.addAll(runCheck(new TopographyOffsetCheck()));
 		ret.addAll(runCheck(new DataProcessorsLinkedToMeasurementArea()));
+		ret.addAll(runCheck(new CheckAreasInAreaDensityVoronoiProcessor()));
+		ret.addAll(runCheck(new GroupSetupCheck()));
+		ret.addAll(runCheck(new CellularAutomatonSetupCheck()));
 		return ret;
 	}
 
@@ -107,5 +105,7 @@ public class ScenarioChecker {
 	public PriorityQueue<ScenarioCheckerMessage> checkUniqueSourceId() {
 		return runCheck(new UniqueSourceIdCheck());
 	}
+
+
 
 }

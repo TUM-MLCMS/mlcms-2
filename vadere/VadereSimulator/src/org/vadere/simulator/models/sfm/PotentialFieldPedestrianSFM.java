@@ -1,22 +1,22 @@
 package org.vadere.simulator.models.sfm;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
-
 import org.vadere.annotation.factories.models.ModelClass;
 import org.vadere.simulator.models.Model;
 import org.vadere.simulator.models.potential.fields.PotentialFieldAgent;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesPotentialSFM;
 import org.vadere.state.attributes.scenario.AttributesAgent;
 import org.vadere.state.scenario.Agent;
 import org.vadere.state.scenario.Topography;
-import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.geometry.shapes.VCircle;
-import org.vadere.util.geometry.shapes.VPoint;
+import org.vadere.util.geometry.shapes.Vector2D;
 import org.vadere.util.math.MathUtil;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 
 @ModelClass
 public class PotentialFieldPedestrianSFM implements PotentialFieldAgent {
@@ -26,7 +26,7 @@ public class PotentialFieldPedestrianSFM implements PotentialFieldAgent {
 	public PotentialFieldPedestrianSFM() {}
 
 	@Override
-	public void initialize(List<Attributes> attributesList, Topography topography,
+	public void initialize(List<Attributes> attributesList, Domain topography,
 	                       AttributesAgent attributesPedestrian, Random random) {
 		this.attributes  = Model.findAttributes(attributesList, AttributesPotentialSFM.class);
 	}

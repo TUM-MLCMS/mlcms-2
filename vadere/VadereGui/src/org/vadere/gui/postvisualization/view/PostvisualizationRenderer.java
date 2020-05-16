@@ -3,38 +3,33 @@ package org.vadere.gui.postvisualization.view;
 import org.vadere.gui.components.view.DefaultRenderer;
 import org.vadere.gui.components.view.SimulationRenderer;
 import org.vadere.gui.postvisualization.model.PostvisualizationModel;
+import org.vadere.gui.postvisualization.model.TableTrajectoryFootStep;
 import org.vadere.gui.renderer.agent.AgentRender;
-import org.vadere.state.scenario.Agent;
-import org.vadere.state.simulation.Step;
-import org.vadere.state.simulation.Trajectory;
+import org.vadere.state.scenario.Pedestrian;
+import org.vadere.state.simulation.FootStep;
 import org.vadere.util.geometry.shapes.VPoint;
-import org.vadere.util.logging.Logger;
-import org.vadere.util.visualization.ColorHelper;
+import tech.tablesaw.api.Row;
+import tech.tablesaw.api.Table;
 
 import java.awt.*;
+import java.awt.geom.Path2D;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 public class PostvisualizationRenderer extends SimulationRenderer {
 
 	private static final double MIN_ARROW_LENGTH = 0.1;
-	private static Logger logger = Logger.getLogger(PostvisualizationRenderer.class);
 	private PostvisualizationModel model;
 
 	private final Map<Integer, VPoint> lastPedestrianPositions;
-
 	private final Map<Integer, VPoint> pedestrianDirections;
-
-	private ColorHelper colorHelper;
 
 	public PostvisualizationRenderer(final PostvisualizationModel model) {
 		super(model);
 		this.model = model;
 		this.pedestrianDirections = new HashMap<>();
 		this.lastPedestrianPositions = new HashMap<>();
-		this.colorHelper = new ColorHelper(model.getStepCount());
 	}
 
 	public PostvisualizationModel getModel() {
@@ -43,100 +38,125 @@ public class PostvisualizationRenderer extends SimulationRenderer {
 
 	@Override
 	protected void renderSimulationContent(final Graphics2D g) {
-		this.colorHelper = new ColorHelper(model.getStepCount());
-		renderPedestrians(g, null);
-	}
-
-	private void renderPedestrians(final Graphics2D g, final Color color) {
 
 		if (!model.isEmpty()) {
+			Color savedColor = g.getColor();
 
-			if (color != null) {
-				g.setColor(color);
-			}
+			Table slice = (model.config.isShowAllTrajectories()) ? model.getAppearedPedestrians() : model.getAlivePedestrians() ;
+			Collection<Pedestrian> pedestrians = model.getPedestrians();
 
-			// choose current trajectories or current+old trajectories
-			Stream<Trajectory> trajectoriesStream;
-			if (model.config.isShowAllTrajectories()) {
-				trajectoriesStream = model.getAppearedPedestrians();
-			} else {
-				trajectoriesStream = model.getAlivePedestrians();
-			}
-			model.getStep().ifPresent(step -> trajectoriesStream.forEach(t -> renderTrajectory(g, color, t, step)));
+			Map<Integer, Color> pedestrianColors = new HashMap<>();
+			pedestrians.forEach(ped -> pedestrianColors.put(ped.getId(),  getPedestrianColor(ped)));
+
+			renderTrajectories(g, slice, pedestrianColors);
+			renderPedestrians(g, pedestrians, pedestrianColors);
+
+			g.setColor(savedColor);
 		}
+
 	}
 
-	private void renderTrajectory(final Graphics2D g, final Color color, final Trajectory trajectory, final Step step) {
+	private void renderTrajectories(Graphics2D g, Table slice, Map<Integer, Color> pedestrianColors) {
 
-		Optional<Agent> optionalPedestrian = trajectory.getAgent(step);
+		Color savedColor = g.getColor();
+		Stroke savedStroke = g.getStroke();
+
+		TableTrajectoryFootStep trajectories = model.getTrajectories();
+
+		if (model.config.isShowTrajectories()) {
+			for(Row row : slice) {
+				boolean isLastStep = row.getDouble(trajectories.endTimeCol) > model.getSimTimeInSec();
+				double startX = row.getDouble(trajectories.startXCol);
+				double startY = row.getDouble(trajectories.startYCol);
+				double endX = row.getDouble(trajectories.endXCol);
+				double endY = row.getDouble(trajectories.endYCol);
+
+				if(isLastStep && model.config.isInterpolatePositions()) {
+					VPoint interpolatedPos = FootStep.interpolateFootStep(startX, startY, endX, endY, row.getDouble(trajectories.startTimeCol), row.getDouble(trajectories.endTimeCol), model.getSimTimeInSec());
+					endX = interpolatedPos.getX();
+					endY = interpolatedPos.getY();
+				}
+
+				int pedId = row.getInt(trajectories.pedIdCol);
+
+				if (model.isElementSelected() && model.getSelectedElement().getId() == pedId) {
+					g.setColor(Color.MAGENTA);
+					g.setStroke(new BasicStroke(getLineWidth() / 2.0f));
+				} else {
+					Color cc = pedestrianColors.get(pedId);
+					if(cc == null) {
+						System.out.println("wtf");
+					}
+					g.setColor(pedestrianColors.get(pedId));
+					g.setStroke(new BasicStroke(getLineWidth() / 4.0f));
+				}
+
+				Path2D.Double path = new Path2D.Double();
+				path.moveTo(startX, startY);
+				path.lineTo(endX, endY);
+				draw(path, g);
+			}
+		}
+
+		g.setColor(savedColor);
+		g.setStroke(savedStroke);
+	}
+
+	private void renderPedestrians(Graphics2D g, Collection<Pedestrian> pedestrians, Map<Integer, Color> agentColors) {
+
 		AgentRender agentRender = getAgentRender();
 
-		if (optionalPedestrian.isPresent()) {
-			Agent pedestrian = optionalPedestrian.get();
+		if (model.config.isShowPedestrians()) {
+			for(Pedestrian pedestrian : pedestrians) {
+				if (model.config.isShowFaydedPedestrians() || model.isAlive(pedestrian.getId())) {
+					agentRender.render(pedestrian, agentColors.get(pedestrian.getId()), g);
 
-			int targetId = pedestrian.hasNextTarget() ? pedestrian.getNextTargetId() : -1;
-
-			// choose the color
-			Optional<Color> c = model.config.isUseEvacuationTimeColor() ?
-					Optional.of(colorHelper.numberToColor(trajectory.getLifeTime().orElse(0))) :
-					Optional.empty();
-
-			Color nonGroupColor = model.getColorByPredicate(pedestrian).orElse(getPedestrianColor(pedestrian));
-
-			g.setColor(nonGroupColor);
-
-			// renderImage the pedestrian
-			if (model.config.isShowPedestrians()) {
-				if (model.config.isShowFaydedPedestrians() || !trajectory.isPedestrianDisappeared(step)) {
-					agentRender.render(pedestrian, nonGroupColor, g);
 					if (model.config.isShowPedestrianIds()) {
 						DefaultRenderer.paintAgentId(g, pedestrian);
 					}
-				}
-			}
 
-			// renderImage the trajectory
-			if (model.config.isShowTrajectories() && step.getStepNumber() > 0) {
-				renderTrajectory(g, trajectory.getPositionsReverse(step), pedestrian);
-			}
-
-			// renderImage the arrows indicating the walking direction
-			if (model.config.isShowWalkdirection() &&
-					(model.config.isShowFaydedPedestrians() || !trajectory.isPedestrianDisappeared(step))) {
-				int pedestrianId = pedestrian.getId();
-				VPoint lastPosition = lastPedestrianPositions.get(pedestrianId);
-
-				VPoint position = pedestrian.getPosition();
-
-				lastPedestrianPositions.put(pedestrianId, position);
-
-				if (lastPosition != null) {
-					VPoint direction;
-					if (lastPosition.distance(position) < MIN_ARROW_LENGTH) {
-						direction = pedestrianDirections.get(pedestrianId);
-					} else {
-						direction = new VPoint(lastPosition.getX() - position.getX(),
-								lastPosition.getY() - position.getY());
-						direction = direction.norm();
-						pedestrianDirections.put(pedestrianId, direction);
-					}
-
-					if (!pedestrianDirections.containsKey(pedestrianId)) {
-						pedestrianDirections.put(pedestrianId, direction);
-					}
-					if (direction != null) {
-						double theta = Math.atan2(-direction.getY(), -direction.getX());
-						DefaultRenderer.drawArrow(g, theta,
-								position.getX() - pedestrian.getRadius() * 2 * direction.getX(),
-								position.getY() - pedestrian.getRadius() * 2 * direction.getY());
+					if (model.config.isShowPedestrianInOutGroup()) {
+						renderPedestrianInOutGroup(g, pedestrian);
 					}
 				}
+
+				if (model.config.isShowWalkdirection() &&
+						(model.config.isShowFaydedPedestrians() || model.getTrajectories().getDeathTime(pedestrian.getId()) > model.getSimTimeInSec())) {
+					renderWalkingDirection(g, pedestrian);
+				}
 			}
-		} else {
-			logger.error("Optional<Pedestrian> should not be empty at this point! Step: " + step + ", Ped: "
-					+ trajectory.getPedestrianId());
 		}
 	}
 
+	private void renderWalkingDirection(Graphics2D g, Pedestrian pedestrian) {
+
+		int pedestrianId = pedestrian.getId();
+		VPoint lastPosition = lastPedestrianPositions.get(pedestrianId);
+		VPoint position = pedestrian.getPosition();
+
+		lastPedestrianPositions.put(pedestrianId, position);
+
+		if (lastPosition != null) {
+			VPoint direction;
+			if (lastPosition.distance(position) < MIN_ARROW_LENGTH) {
+				direction = pedestrianDirections.get(pedestrianId);
+			} else {
+				direction = new VPoint(lastPosition.getX() - position.getX(),
+						lastPosition.getY() - position.getY());
+				direction = direction.norm();
+				pedestrianDirections.put(pedestrianId, direction);
+			}
+
+			if (!pedestrianDirections.containsKey(pedestrianId)) {
+				pedestrianDirections.put(pedestrianId, direction);
+			}
+			if (direction != null) {
+				double theta = Math.atan2(-direction.getY(), -direction.getX());
+				DefaultRenderer.drawArrow(g, theta,
+						position.getX() - pedestrian.getRadius() * 2 * direction.getX(),
+						position.getY() - pedestrian.getRadius() * 2 * direction.getY());
+			}
+		}
+	}
 
 }

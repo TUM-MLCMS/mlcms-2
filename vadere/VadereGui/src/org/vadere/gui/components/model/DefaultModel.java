@@ -38,7 +38,7 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 
 	protected static final double MAX_SCALE_FACTOR = 1000;
 
-	protected static final double MIN_SCALE_FACTOR = 1.0;
+	protected static final double MIN_SCALE_FACTOR = 0.01;
 
 	protected double scaleFactor;
 
@@ -102,6 +102,9 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 			case TARGET:
 				c = getConfig().getTargetColor();
 				break;
+            case TARGET_CHANGER:
+                c = getConfig().getTargetChangerColor();
+                break;
 			case ABSORBING_AREA:
 				c = getConfig().getAbsorbingAreaColor();
 				break;
@@ -135,18 +138,8 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 
 	@Override
 	public boolean setScale(final double scale) {
-		boolean hasChanged = true;
 		double oldScale = scaleFactor;
-
-		if (scale < MIN_SCALE_FACTOR) {
-			this.scaleFactor = MIN_SCALE_FACTOR;
-		} else if (scale > MAX_SCALE_FACTOR) {
-			this.scaleFactor = MAX_SCALE_FACTOR;
-		} else if (scale != this.scaleFactor) {
-			this.scaleFactor = scale;
-		} else {
-			hasChanged = false;
-		}
+		boolean hasChanged = setScaleWithoutChangingViewport(scale);
 
 		// update the viewport, since it depends on the scaleFactor
 		if (hasChanged) {
@@ -162,36 +155,57 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 		return hasChanged;
 	}
 
-	protected void notifyViewportListeners(final ViewportChangeEvent event) {
+	@Override
+	public boolean setScaleWithoutChangingViewport(double scale) {
+		boolean hasChanged = true;
+
+		if (scale < MIN_SCALE_FACTOR) {
+			this.scaleFactor = MIN_SCALE_FACTOR;
+		} else if (scale > MAX_SCALE_FACTOR) {
+			this.scaleFactor = MAX_SCALE_FACTOR;
+		} else if (scale != this.scaleFactor) {
+			this.scaleFactor = scale;
+		} else {
+			hasChanged = false;
+		}
+
+		if(hasChanged) {
+			setChanged();
+		}
+
+		return hasChanged;
+	}
+
+	protected synchronized void notifyViewportListeners(final ViewportChangeEvent event) {
 		for (IViewportChangeListener listener : viewportChangeListeners) {
 			listener.viewportChange(event);
 		}
 	}
 
 	@Override
-	public void notifyScaleListeners() {
+	public synchronized void notifyScaleListeners() {
 		for (IScaleChangeListener listener : scaleChangeListeners) {
 			listener.scaleChange(getScaleFactor());
 		}
 	}
 
 	@Override
-	public void addViewportChangeListener(final IViewportChangeListener listener) {
+	public synchronized void addViewportChangeListener(final IViewportChangeListener listener) {
 		viewportChangeListeners.add(listener);
 	}
 
 	@Override
-	public void removeViewportChangeListener(final IViewportChangeListener listener) {
+	public synchronized void removeViewportChangeListener(final IViewportChangeListener listener) {
 		viewportChangeListeners.remove(listener);
 	}
 
 	@Override
-	public void addScaleChangeListener(final IScaleChangeListener listener) {
+	public synchronized void addScaleChangeListener(final IScaleChangeListener listener) {
 		this.scaleChangeListeners.add(listener);
 	}
 
 	@Override
-	public void removeScaleChangeListener(final IScaleChangeListener listener) {
+	public synchronized void removeScaleChangeListener(final IScaleChangeListener listener) {
 		this.scaleChangeListeners.remove(listener);
 	}
 
@@ -224,7 +238,7 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	 */
 
 	@Override
-	public void setMousePosition(final Point mousePosition) {
+	public synchronized void setMousePosition(final Point mousePosition) {
 		// this is needed cause of the mirrowing!
 		VPoint mouseWorldPosition = pixelToWorld(new VPoint(mousePosition.x, mousePosition.y));
 		double factor = Math.max(10, 1 / getGridResolution());
@@ -234,7 +248,7 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	}
 
 	@Override
-	public void setStartSelectionPoint(final Point startSelectionPoint) {
+	public synchronized void setStartSelectionPoint(final Point startSelectionPoint) {
 		VPoint worldPosition = pixelToWorld(new VPoint(startSelectionPoint.x, startSelectionPoint.y));
 		double factor = Math.max(10, 1 / getGridResolution());
 		this.startSelectionPoint = new VPoint((Math.round(worldPosition.x * factor)) / factor,
@@ -243,18 +257,18 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	}
 
 	@Override
-	public void setSelectionShape(final VShape shape) {
+	public synchronized void setSelectionShape(final VShape shape) {
 		selectionShape = shape;
 		setChanged();
 	}
 
 	@Override
-	public void fireChangeViewportEvent(final Rectangle2D.Double viewportBound) {
+	public synchronized void fireChangeViewportEvent(final Rectangle2D.Double viewportBound) {
 		notifyViewportListeners(new ViewportChangeEvent(viewportBound));
 	}
 
 	@Override
-	public void setViewportBound(final Rectangle2D.Double viewportBound) {
+	public synchronized void setViewportBound(final Rectangle2D.Double viewportBound) {
 		Rectangle2D.Double oldViewportBound = this.viewportBound;
 
 		if (!oldViewportBound.equals(viewportBound)) {
@@ -331,7 +345,7 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	}
 
 	@Override
-	public void setVoronoiDiagram(final VoronoiDiagram voronoiDiagram) {
+	public synchronized void setVoronoiDiagram(final VoronoiDiagram voronoiDiagram) {
 		this.voronoiDiagram = voronoiDiagram;
 	}
 
@@ -370,7 +384,7 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	}
 
 	@Override
-	public void setWindowBound(final Rectangle2D.Double windowBound) {
+	public synchronized void setWindowBound(final Rectangle2D.Double windowBound) {
 		this.windowBound = windowBound;
 		setChanged();
 	}
@@ -381,18 +395,18 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 		return selectedElement;
 	}
 
-	private Optional<ScenarioElement> getElementsByPosition(final VPoint position) {
+	private synchronized Optional<ScenarioElement> getElementsByPosition(final VPoint position) {
 		return getElements(e -> e.getShape().intersects(new Rectangle2D.Double(position.x - 0.1, position.y - 0.1, 0.2, 0.2))).findFirst();
 	}
 
-	protected ScenarioElement getClickedElement(final VPoint position) {
+	protected synchronized ScenarioElement getClickedElement(final VPoint position) {
 		Optional<ScenarioElement> optional = getElementsByPosition(position);
 		if (optional.isPresent())
 			return optional.get();
 		return null;
 	}
 
-	protected Stream<ScenarioElement> getElements(final Predicate<ScenarioElement> predicate) {
+	protected synchronized Stream<ScenarioElement> getElements(final Predicate<ScenarioElement> predicate) {
 		return StreamSupport.stream(this.spliterator(), false).filter(predicate);
 	}
 
@@ -418,12 +432,12 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	}
 
 	@Override
-	public void addSelectScenarioElementListener(final ISelectScenarioElementListener listener) {
+	public synchronized void addSelectScenarioElementListener(final ISelectScenarioElementListener listener) {
 		this.selectScenarioElementListener.add(listener);
 	}
 
 	@Override
-	public void removeSelectScenarioElementListener(final ISelectScenarioElementListener listener) {
+	public synchronized void removeSelectScenarioElementListener(final ISelectScenarioElementListener listener) {
 		this.selectScenarioElementListener.remove(listener);
 	}
 
@@ -442,13 +456,13 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 		setChanged();
 	}
 
-	protected void notifySelectSecenarioElementListener(final ScenarioElement scenarioElement) {
+	protected synchronized void notifySelectSecenarioElementListener(final ScenarioElement scenarioElement) {
 		for (ISelectScenarioElementListener listener : selectScenarioElementListener) {
 			listener.selectionChange(scenarioElement);
 		}
 	}
 
-	protected void calculateScaleFactor() {
+	protected synchronized void calculateScaleFactor() {
 		scaleFactor = Math.min(getWindowBound().getWidth() / getViewportBound().getWidth(),
 				getWindowBound().getHeight() / getViewportBound().getHeight());
 	}
@@ -458,9 +472,12 @@ public abstract class DefaultModel<T extends DefaultConfig> extends Observable i
 	 * @param pInPixel the mouse position of the mouse event
 	 * @return
 	 */
-	protected VPoint pixelToWorld(final VPoint pInPixel) {
-		return new VPoint(pInPixel.getX() / scaleFactor + getTopographyBound().getMinX(),
-				getTopographyBound().getMinY() + (getTopographyBound().getHeight() * scaleFactor - pInPixel.getY()) / scaleFactor);
+	protected synchronized VPoint pixelToWorld(final VPoint pInPixel) {
+		if(pInPixel != null && getTopographyBound() != null) {
+			return new VPoint(pInPixel.getX() / scaleFactor + getTopographyBound().getMinX(),
+					getTopographyBound().getMinY() + (getTopographyBound().getHeight() * scaleFactor - pInPixel.getY()) / scaleFactor);
+		}
+		return VPoint.ZERO;
 		/*
 		 * return new VPoint(pInPixel.getX() / scaleFactor + getTopographyBound().getX() +
 		 * getViewportBound().getX(),

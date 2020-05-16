@@ -1,41 +1,62 @@
 package org.vadere.state.attributes.scenario;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import org.vadere.state.attributes.AttributesEmbedShape;
 import org.vadere.state.scenario.ConstantDistribution;
 import org.vadere.state.types.DynamicElementType;
+import org.vadere.state.util.Views;
 import org.vadere.util.geometry.shapes.VShape;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class AttributesSource extends AttributesEmbedShape {
 
 	public static final String CONSTANT_DISTRIBUTION = ConstantDistribution.class.getName();
 	public static final int NO_MAX_SPAWN_NUMBER_TOTAL = -1;
 
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private int id = ID_NOT_SET;
 
 	/** Shape and position. */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private VShape shape = null;
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private String interSpawnTimeDistribution = CONSTANT_DISTRIBUTION;
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private List<Double> distributionParameters = Collections.singletonList(1.0);
 
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private int spawnNumber = 1;
 
 	/** Maximum number of spawned elements. {@link #NO_MAX_SPAWN_NUMBER_TOTAL} -> no maximum number. */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private int maxSpawnNumberTotal = NO_MAX_SPAWN_NUMBER_TOTAL;
 
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private double startTime = 0;
 	/** endTime == startTime means one single spawn event. */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private double endTime = 0;
 	
 	/**
 	 * The pedestrians are spawned at random positions rather than from the top
 	 * left corner downwards.
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private boolean spawnAtRandomPositions;
+
+
+	/**
+	 * If set to true, the pedestrians are spawned on a rectangular grid for the cellular automaton. Different to the
+	 * regular spawnArray, they will touch if the cells are 0.4m and the radius is set to 0.2m.
+	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
+	private boolean spawnAtGridPositionsCA;
+
 	/**
 	 * If set to true, only free space is used to create pedestrians at each
 	 * wave. When the endTime is reached and not enough pedestrians have been
@@ -45,7 +66,9 @@ public class AttributesSource extends AttributesEmbedShape {
 	 * useFreeSpaceOnly = false can cause errors if tow pedestrians arw spawned at
 	 * exactly the same place. Maybe Deprecate this switch.
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private boolean useFreeSpaceOnly = true;
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private List<Integer> targetIds = new LinkedList<>();
 
 	/**
@@ -62,13 +85,17 @@ public class AttributesSource extends AttributesEmbedShape {
   	 *  GroupSize   [  1    2    3     4     5         ] ------------------------------------------
 	 *  uniform distribution of groups of the size from 3 to 5 ------------------------------------
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private List<Double> groupSizeDistribution = Arrays.asList(1.0);
 
 	/**
 	 * The type of dynamic elements this source creates.
 	 */
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
 	private DynamicElementType dynamicElementType = DynamicElementType.PEDESTRIAN;
 
+	@JsonView(Views.CacheViewExclude.class) // ignore when determining if floor field cache is valid
+	private AttributesAgent attributesPedestrian = null;
 	@SuppressWarnings("unused")
 	private AttributesSource() {}
 
@@ -110,6 +137,7 @@ public class AttributesSource extends AttributesEmbedShape {
 		return startTime;
 	}
 
+
 	/** If end time equals start time, exactly one single spawn event will be triggered. */
 	public double getEndTime() {
 		return endTime;
@@ -130,6 +158,12 @@ public class AttributesSource extends AttributesEmbedShape {
 
 	public boolean isSpawnAtRandomPositions() {
 		return spawnAtRandomPositions;
+	}
+
+	public boolean isSpawnAtGridPositionsCA(){ return spawnAtGridPositionsCA; }
+
+	public AttributesAgent getAttributesPedestrian() {
+		return attributesPedestrian;
 	}
 
 	public boolean isUseFreeSpaceOnly() {
@@ -221,4 +255,7 @@ public class AttributesSource extends AttributesEmbedShape {
 		checkSealed();
 		this.id = id;
 	}
+
+
+
 }

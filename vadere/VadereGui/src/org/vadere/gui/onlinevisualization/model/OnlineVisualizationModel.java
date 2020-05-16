@@ -1,5 +1,6 @@
 package org.vadere.gui.onlinevisualization.model;
 
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,15 +9,15 @@ import java.util.LinkedList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
+import org.vadere.gui.components.model.AgentColoring;
 import org.vadere.gui.components.model.DefaultSimulationConfig;
 import org.vadere.gui.components.model.SimulationModel;
 import org.vadere.gui.onlinevisualization.OnlineVisualization;
 import org.vadere.meshing.mesh.gen.PMesh;
 import org.vadere.meshing.mesh.inter.IMesh;
 import org.vadere.simulator.models.potential.fields.IPotentialField;
-import org.vadere.simulator.models.potential.solver.calculators.mesh.PotentialPoint;
 import org.vadere.state.scenario.*;
-import org.vadere.util.data.cellgrid.IPotentialPoint;
 import org.vadere.util.geometry.shapes.IPoint;
 import org.vadere.util.voronoi.VoronoiDiagram;
 
@@ -37,7 +38,7 @@ public class OnlineVisualizationModel extends SimulationModel<DefaultSimulationC
 
 	private IPotentialField potentialField = null;
 
-	private Function<Agent, IMesh<? extends IPotentialPoint, ?, ?, ?>> discretizations = null;
+	private Function<Agent, IMesh<?, ?, ?>> discretizations = null;
 
 	private Agent agent = null;
 
@@ -69,6 +70,7 @@ public class OnlineVisualizationModel extends SimulationModel<DefaultSimulationC
 		this.drawDataSynchronizer = new Object();
 		this.voronoiSnapshots = new LinkedList<>();
 		this.observationAreaSnapshots = new LinkedList<>();
+		this.config.setInterpolatePositions(false);
 	}
 
 	@Override
@@ -78,6 +80,16 @@ public class OnlineVisualizationModel extends SimulationModel<DefaultSimulationC
 		}
 		Collection<Agent> result = new LinkedList<>();
 		result.addAll(topography.getElements(Agent.class));
+		return result;
+	}
+
+	@Override
+	public Collection<Pedestrian> getPedestrians() {
+		if (topography == null) {
+			return new ArrayList<>();
+		}
+		Collection<Pedestrian> result = new LinkedList<>();
+		result.addAll(topography.getElements(Pedestrian.class));
 		return result;
 	}
 
@@ -129,8 +141,12 @@ public class OnlineVisualizationModel extends SimulationModel<DefaultSimulationC
 
 			if (topography == null) {
 				topography = observationAreaSnapshot.scenario;
-				fireChangeViewportEvent(new Rectangle2D.Double(topography.getBounds().x, topography.getBounds().y,
-						topography.getBounds().width, topography.getBounds().height));
+				// recalculate GUI (fireChangeViewportEvent will synchronize on model which is also
+				// needed by some awt event. Therefore do this in EDT (Event Dispatching Thread)
+				EventQueue.invokeLater(() -> {
+					fireChangeViewportEvent(new Rectangle2D.Double(topography.getBounds().x, topography.getBounds().y,
+							topography.getBounds().width, topography.getBounds().height));
+				});
 			} else {
 				topography = observationAreaSnapshot.scenario;
 			}
@@ -209,12 +225,12 @@ public class OnlineVisualizationModel extends SimulationModel<DefaultSimulationC
 	}
 
 	@Override
-	public IMesh<? extends IPotentialPoint, ?, ?, ?> getDiscretization() {
+	public IMesh<?, ?, ?> getDiscretization() {
 		if(agent != null && discretizations != null && config.isShowTargetPotentielFieldMesh() && agent.equals(getSelectedElement())) {
 			return discretizations.apply(agent);
 		}
 
-		return new PMesh<IPotentialPoint>((x, y) -> new PotentialPoint(x, y));
+		return new PMesh();
 	}
 
 	@Override
@@ -229,5 +245,24 @@ public class OnlineVisualizationModel extends SimulationModel<DefaultSimulationC
 
 	public double getSimTimeInSec() {
 		return simTimeInSec;
+	}
+
+	@Override
+	public void setAgentColoring(@NotNull AgentColoring agentColoring) {
+		switch (agentColoring) {
+			case TARGET:
+			case GROUP:
+			case RANDOM:
+			case SELF_CATEGORY:
+				config.setAgentColoring(agentColoring);
+				break;
+			default:
+				throw new IllegalArgumentException(agentColoring + " is not supported for the online simulation.");
+		}
+	}
+
+	@Override
+	public boolean isAlive(int pedId) {
+		return topography.getPedestrianDynamicElements().idExists(pedId);
 	}
 }

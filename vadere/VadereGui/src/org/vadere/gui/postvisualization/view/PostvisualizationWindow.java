@@ -2,49 +2,67 @@ package org.vadere.gui.postvisualization.view;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
+
+import org.apache.commons.configuration2.Configuration;
 import org.jetbrains.annotations.NotNull;
+import org.vadere.gui.components.control.ActionGeneratePoly;
 import org.vadere.gui.components.control.IViewportChangeListener;
 import org.vadere.gui.components.control.JViewportChangeListener;
 import org.vadere.gui.components.control.PanelResizeListener;
 import org.vadere.gui.components.control.ViewportChangeListener;
-import org.vadere.gui.components.control.simulation.*;
+import org.vadere.gui.components.control.simulation.ActionGenerateINETenv;
+import org.vadere.gui.components.control.simulation.ActionGeneratePNG;
+import org.vadere.gui.components.control.simulation.ActionGenerateSVG;
+import org.vadere.gui.components.control.simulation.ActionGenerateTikz;
+import org.vadere.gui.components.control.simulation.ActionSwapSelectionMode;
+import org.vadere.gui.components.control.simulation.ActionVisualization;
 import org.vadere.gui.components.model.IDefaultModel;
 import org.vadere.gui.components.utils.Messages;
 import org.vadere.gui.components.utils.Resources;
 import org.vadere.gui.components.utils.SwingUtils;
 import org.vadere.gui.components.view.DialogFactory;
 import org.vadere.gui.components.view.ScenarioElementView;
-import org.vadere.gui.postvisualization.PostVisualisation;
-import org.vadere.gui.postvisualization.control.*;
+import org.vadere.gui.postvisualization.control.ActionOpenFile;
+import org.vadere.gui.postvisualization.control.ActionPause;
+import org.vadere.gui.postvisualization.control.ActionPlay;
+import org.vadere.gui.postvisualization.control.ActionRecording;
+import org.vadere.gui.postvisualization.control.ActionRemoveFloorFieldFile;
+import org.vadere.gui.postvisualization.control.ActionShowPotentialField;
+import org.vadere.gui.postvisualization.control.ActionStop;
+import org.vadere.gui.postvisualization.control.ActionVisualizationMenu;
+import org.vadere.gui.postvisualization.control.Player;
 import org.vadere.gui.postvisualization.model.PostvisualizationModel;
 import org.vadere.gui.projectview.control.ActionDeselect;
 import org.vadere.simulator.projects.Scenario;
 import org.vadere.simulator.projects.io.IOOutput;
+import org.vadere.util.config.VadereConfig;
 import org.vadere.util.io.IOUtils;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.dnd.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Observer;
 import java.util.Optional;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 
-import java.util.List;
+import javax.swing.*;
 
 /**
  * Main Window of the new post visualization.
- * 
- * @Version 1.0
- * 
  */
 public class PostvisualizationWindow extends JPanel implements Observer, DropTargetListener {
 	private static final long serialVersionUID = -8177132133860336295L;
+	private static final Configuration CONFIG = VadereConfig.getConfig();
+
 	private JToolBar toolbar;
 	private ScenarioPanel scenarioPanel;
 	private AdjustPanel adjustPanel;
@@ -94,8 +112,8 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 
 		// 6. construct the toolbar
 		toolbar = new JToolBar("Toolbar");
-		int toolbarSize = Integer.parseInt(resources.getProperty("Toolbar.size"));
-		toolbar.setPreferredSize(new Dimension(toolbarSize, toolbarSize));
+		int toolbarSize = CONFIG.getInt("Gui.toolbar.size");
+		//toolbar.setPreferredSize(new Dimension(toolbarSize, toolbarSize));
 		toolbar.setBorderPainted(false);
 		toolbar.setFloatable(false);
 		toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -110,30 +128,38 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 		CellConstraints cc = new CellConstraints();
 
 		// 9. add all components to this frame
-		if (resources.getBooleanProperty("PostVis.enableJsonInformationPanel")) {
+		if (CONFIG.getBoolean("PostVis.enableJsonInformationPanel")) {
 			layout = new FormLayout("2dlu, default:grow(0.75), 2dlu, default:grow(0.25), 2dlu", // col
 					"2dlu, default, 2dlu, default, 2dlu, default, 2dlu"); // rows
+			setLayout(layout);
+
 			textView = new ScenarioElementView(model);
 			textView.setEditable(false);
 			textView.setPreferredSize(new Dimension(1, windowHeight));
-			setLayout(layout);
-			add(toolbar, cc.xyw(2, 2, 4));
-			add(scrollPane, cc.xy(2, 4));
+
+			JSplitPane splitPaneForTopographyAndJsonPane = new JSplitPane();
+			splitPaneForTopographyAndJsonPane.setResizeWeight(0.8);
+			splitPaneForTopographyAndJsonPane.resetToPreferredSizes();
+			splitPaneForTopographyAndJsonPane.setLeftComponent(scrollPane);
+			splitPaneForTopographyAndJsonPane.setRightComponent(textView);
+
+			add(toolbar, cc.xyw(2, 2, 3));
+			add(splitPaneForTopographyAndJsonPane, cc.xywh(2, 4, 4, 1));
 			add(adjustPanel, cc.xyw(2, 6, 4));
-			add(textView, cc.xy(4, 4));
-			// model.addObserver(textView);
 		} else {
 			layout = new FormLayout("2dlu, default:grow, 2dlu", // col
 					"2dlu, default, 2dlu, default, 2dlu, default, 2dlu"); // rows
-			textView = null;
 			setLayout(layout);
+
+			textView = null;
+
 			add(toolbar, cc.xy(2, 2));
 			add(scrollPane, cc.xy(2, 4));
 			add(adjustPanel, cc.xy(2, 6));
 		}
 
-		int iconHeight = Integer.valueOf(resources.getProperty("ProjectView.icon.height.value"));
-		int iconWidth = Integer.valueOf(resources.getProperty("ProjectView.icon.width.value"));
+		int iconHeight = VadereConfig.getConfig().getInt("ProjectView.icon.height.value");
+		int iconWidth = VadereConfig.getConfig().getInt("ProjectView.icon.width.value");
 		playButton = addActionToToolbar(toolbar,
 				new ActionPlay("play", resources.getIcon("play.png", iconWidth, iconHeight), model),
 				"PostVis.btnPlay.tooltip");
@@ -244,11 +270,20 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 				renderer, model);
 		AbstractAction tikzImg = new ActionGenerateTikz(Messages.getString("ProjectView.btnTikZSnapshot.tooltip"), resources.getIcon("camera_tikz.png", iconWidth, iconHeight),
 				renderer, model);
+		AbstractAction inetImg = new ActionGenerateINETenv(Messages.getString("ProjectView.btnINETSnapshot.tooltip"), resources.getIcon("camera_tikz.png", iconWidth, iconHeight),
+				renderer, model);
+
+		AbstractAction polyImg = new ActionGeneratePoly(Messages.getString("ProjectView.btnPolySnapshot.tooltip"), resources.getIcon("camera_poly.png", iconWidth, iconHeight),
+				model);
+
+
 		// add new ImageGenerator Action ...
 
 		imgOptions.add(pngImg);
 		imgOptions.add(svgImg);
 		imgOptions.add(tikzImg);
+		imgOptions.add(inetImg);
+		imgOptions.add(polyImg);
 		// add Action to List ....
 
 		ActionVisualizationMenu imgDialog = new ActionVisualizationMenu(
@@ -291,7 +326,7 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 		JMenuItem miGlobalSettings = new JMenuItem("View");
 
 		String[] paths =
-				Preferences.userNodeForPackage(PostVisualisation.class).get("recentlyOpenedFiles", "").split(",");
+				VadereConfig.getConfig().getString("recentlyOpenedFiles", "").split(",");
 
 		if (paths != null) {
 			int i = 1;
@@ -350,7 +385,7 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 		Player.getInstance(model).stop();
 
 		try {
-			model.init(IOOutput.readTrajectories(trajectoryFile.toPath(), scenario), scenario, trajectoryFile.getParent());
+			model.init(IOOutput.readTrajectories(trajectoryFile.toPath()), scenario, trajectoryFile.getParent());
 			model.notifyObservers();
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, ex.getMessage(), Messages.getString("Error.text"), JOptionPane.ERROR_MESSAGE);
@@ -381,19 +416,22 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 
 	@Override
 	public void update(java.util.Observable o, Object arg) {
-
-		String[] paths =
-				Preferences.userNodeForPackage(PostVisualisation.class).get("recentlyOpenedFiles", "").split(",");
-		if (paths != null) {
-			mRecentFiles.removeAll();
-			int i = 1;
-			for (String path : paths) {
-				if (path.length() > 0) {
-					mRecentFiles.add(new ActionOpenFile("[" + i + "]" + " " + path, null, model, path));
-					i++;
+		SwingUtilities.invokeLater(() -> {
+			if(model.hasOutputChanged()) {
+				String[] paths =
+						VadereConfig.getConfig().getString("recentlyOpenedFiles", "").split(",");
+				if (paths != null) {
+					mRecentFiles.removeAll();
+					int i = 1;
+					for (String path : paths) {
+						if (path.length() > 0) {
+							mRecentFiles.add(new ActionOpenFile("[" + i + "]" + " " + path, null, model, path));
+							i++;
+						}
+					}
 				}
 			}
-		}
+		});
 	}
 
 	public static void start() {
@@ -460,15 +498,8 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 	}
 
 	public void openScenarioAndTrajectoryFile(@NotNull File scenarioOrTrajectoryFile) {
-		resources.setProperty("SettingsDialog.outputDirectory.path", scenarioOrTrajectoryFile.getParent());
-		Preferences.userNodeForPackage(PostVisualisation.class).put("SettingsDialog.outputDirectory.path", scenarioOrTrajectoryFile.getParent());
-
-		try {
-			IOUtils.saveUserPreferences(PostVisualisation.preferencesFilename,
-					Preferences.userNodeForPackage(PostVisualisation.class));
-		} catch (IOException | BackingStoreException e1) {
-			e1.printStackTrace();
-		}
+		VadereConfig.getConfig().setProperty("SettingsDialog.outputDirectory.path", scenarioOrTrajectoryFile.getParent());
+		VadereConfig.getConfig().setProperty("SettingsDialog.outputDirectory.path", scenarioOrTrajectoryFile.getParent());
 
 		Runnable runnable = () -> {
 			Player.getInstance(model).stop();
@@ -488,7 +519,7 @@ public class PostvisualizationWindow extends JPanel implements Observer, DropTar
 
 				if (trajectoryFile.isPresent() && scenarioFile.isPresent()) {
 					Scenario vadereScenario = IOOutput.readScenario(scenarioFile.get().toPath());
-					model.init(IOOutput.readTrajectories(trajectoryFile.get().toPath(), vadereScenario), vadereScenario, trajectoryFile.get().getParent());
+					model.init(IOOutput.readTrajectories(trajectoryFile.get().toPath()), vadereScenario, trajectoryFile.get().getParent());
 					model.notifyObservers();
 					dialog.dispose();
 				} else {

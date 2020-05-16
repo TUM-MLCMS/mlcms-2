@@ -1,25 +1,23 @@
 package org.vadere.gui.postvisualization.model;
 
-import java.util.*;
-
+import org.apache.commons.configuration2.Configuration;
 import org.vadere.gui.components.model.DefaultSimulationConfig;
-import org.vadere.gui.components.utils.Resources;
+import org.vadere.util.config.VadereConfig;
+
+import java.util.Observable;
 
 public class PostvisualizationConfig extends DefaultSimulationConfig {
 
-	private static Resources resources = Resources.getInstance("postvisualization");
+	private static final Configuration CONFIG = VadereConfig.getConfig();
 
 	private boolean recording = false;
 	private boolean showAllTrajectories = true;
-	private boolean showTrajecoriesOnSnapshot = false;
 	private boolean showFaydedPedestrians = false;
 	private boolean loadTopographyInformationsOnly = false;
-	private boolean useEvacuationTimeColor = false;
-	//private double gridWidth = Double.valueOf(resources.getProperty("PostVis.cellWidth"));
-	private int fps = Integer.valueOf(resources.getProperty("PostVis.framesPerSecond"));
 
-	private final int MAX_VELOCITY = Integer.valueOf(resources.getProperty("PostVis.maxFramePerSecond"));
-
+	private int fps = CONFIG.getInt("PostVis.framesPerSecond");
+	private final int MAX_VELOCITY = CONFIG.getInt("PostVis.maxFramePerSecond");
+	private double timeResolution = CONFIG.getDouble("PostVis.timeResolution");
 	private Observable observable;
 
 	public PostvisualizationConfig() {}
@@ -30,10 +28,8 @@ public class PostvisualizationConfig extends DefaultSimulationConfig {
 		//this.gridWidth = config.gridWidth;
 		this.showAllTrajectories = config.showAllTrajectories;
 		this.showFaydedPedestrians = config.showFaydedPedestrians;
-		this.showTrajecoriesOnSnapshot = config.showTrajecoriesOnSnapshot;
 		this.loadTopographyInformationsOnly = config.loadTopographyInformationsOnly;
 		this.observable = config.observable;
-		this.useEvacuationTimeColor = config.useEvacuationTimeColor;
 	}
 
 	public void setShowAllTrajectories(boolean showAllTrajectories) {
@@ -41,8 +37,18 @@ public class PostvisualizationConfig extends DefaultSimulationConfig {
 		setChanged();
 	}
 
+	public void setTimeResolution(double timeResolution) {
+		this.timeResolution = timeResolution;
+		CONFIG.setProperty("PostVis.timeResolution", timeResolution);
+		setChanged();
+	}
+
 	public int getFps() {
 		return fps;
+	}
+
+	public double getTimeResolution() {
+		return timeResolution;
 	}
 
 	public int getMaxVelocity() {
@@ -51,6 +57,8 @@ public class PostvisualizationConfig extends DefaultSimulationConfig {
 
 	public void setFps(final int fps) {
 		this.fps = fps;
+		CONFIG.setProperty("PostVis.framesPerSecond", fps);
+		setChanged();
 	}
 
 	public void setRecording(boolean recording) {
@@ -73,25 +81,8 @@ public class PostvisualizationConfig extends DefaultSimulationConfig {
 		return showAllTrajectories;
 	}
 
-	public boolean isShowTrajecoriesOnSnapshot() {
-		return showTrajecoriesOnSnapshot;
-	}
-
-	public void setShowTrajecoriesOnSnapshot(final boolean showTrajecoriesOnSnapshot) {
-		this.showTrajecoriesOnSnapshot = showTrajecoriesOnSnapshot;
-	}
-
-	public boolean isUseEvacuationTimeColor() {
-		return useEvacuationTimeColor;
-	}
-
 	public boolean isShowFaydedPedestrians() {
 		return showFaydedPedestrians;
-	}
-
-	public void setUseEvacuationTimeColor(boolean useEvacuationTimeColor) {
-		this.useEvacuationTimeColor = useEvacuationTimeColor;
-		setChanged();
 	}
 
 	public void setShowFaydedPedestrians(boolean showFaydedPedestrians) {

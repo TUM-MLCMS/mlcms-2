@@ -5,11 +5,14 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.vadere.simulator.control.factory.GroupSourceControllerFactory;
 import org.vadere.simulator.control.factory.SourceControllerFactory;
+import org.vadere.simulator.control.scenarioelements.GroupSourceController;
+import org.vadere.simulator.control.scenarioelements.SourceController;
 import org.vadere.simulator.models.DynamicElementFactory;
 import org.vadere.simulator.models.groups.GroupModel;
 import org.vadere.simulator.models.groups.GroupSizeDeterminator;
 import org.vadere.simulator.models.groups.GroupSizeDeterminatorRandom;
 import org.vadere.simulator.models.groups.cgm.CentroidGroupModel;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesCGM;
 import org.vadere.state.attributes.scenario.AttributesAgent;
@@ -27,6 +30,7 @@ import org.vadere.util.geometry.shapes.VPoint;
 import org.vadere.util.geometry.shapes.VRectangle;
 import org.vadere.util.geometry.shapes.VShape;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,7 +62,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 		m = new CentroidGroupModel();
 		ArrayList<Attributes> attrs = new ArrayList<>();
 		attrs.add(new AttributesCGM());
-		m.initialize(attrs, d.topography, d.attributesPedestrian, d.random);
+		m.initialize(attrs, new Domain(d.topography), d.attributesPedestrian, d.random);
 
 		return getTestGroupFactory(m, gsd);
 	}
@@ -67,7 +71,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 		m = new CentroidGroupModel();
 		ArrayList<Attributes> attrs = new ArrayList<>();
 		attrs.add(new AttributesCGM());
-		m.initialize(attrs, d.topography, d.attributesPedestrian, d.random);
+		m.initialize(attrs, new Domain(d.topography), d.attributesPedestrian, d.random);
 
 		return new GroupSourceControllerFactory(m);
 	}
@@ -77,7 +81,12 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 	public void initialize(SourceTestAttributesBuilder builder) {
 		SourceTestData d = new SourceTestData();
 
-		d.attributesSource = builder.getResult();
+		try{
+			d.attributesSource = builder.getResult();
+		} catch(IOException e){
+			throw new RuntimeException(e.getMessage());
+		}
+
 		d.attributesPedestrian = new AttributesAgent();
 
 		d.random = new Random(builder.getRandomSeed());
@@ -88,8 +97,17 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 
 			@Override
 			public <T extends DynamicElement> DynamicElement createElement(VPoint position, int id, Class<T> type) {
+
+				return createElement(position, id, d.attributesPedestrian, type);
+			}
+
+			@Override
+			public <T extends DynamicElement> DynamicElement createElement(VPoint position, int id, Attributes attr, Class<T> type) {
+
+				AttributesAgent aAttr = (AttributesAgent) attr;
+
 				AttributesAgent att = new AttributesAgent(
-						d.attributesPedestrian, registerDynamicElementId(null, id));
+						aAttr, registerDynamicElementId(null, id));
 				Pedestrian ped = new Pedestrian(att, d.random);
 				ped.setPosition(position);
 				return ped;
@@ -163,7 +181,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 		double endTime = 10.0;
 		SourceTestAttributesBuilder builder = new SourceTestAttributesBuilder()
 				.setStartTime(startTime).setEndTime(endTime)
-				.setSpawnIntervalForConstantDistribution(10)
+				.setDistributionParams(10)
 				.setSourceDim(5.0, 5.0)
 				.setGroupSizeDistribution(0.0, 0.5, 0.5)
 				.setGroupSizeDistributionMock(2, 3, 2, 3);
@@ -185,7 +203,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 		double endTime = 10.0;
 		SourceTestAttributesBuilder builder = new SourceTestAttributesBuilder()
 				.setStartTime(0).setEndTime(endTime)
-				.setSpawnIntervalForConstantDistribution(5)
+				.setDistributionParams(5)
 				.setSourceDim(5.0, 5.0)
 				.setGroupSizeDistribution(0.0, 0.5, 0.5)
 				.setGroupSizeDistributionMock(2, 3, 2, 3);
@@ -205,7 +223,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 		double endTime = 1.0;
 		SourceTestAttributesBuilder builder = new SourceTestAttributesBuilder()
 				.setStartTime(0).setEndTime(endTime)
-				.setSpawnIntervalForConstantDistribution(0.1)
+				.setDistributionParams(0.1)
 				.setSourceDim(5.0, 5.0)
 				.setGroupSizeDistribution(0.0, 0.5, 0.5)
 				.setGroupSizeDistributionMock(2, 3, 2, 3, 2, 2, 3, 3, 3, 2, 2, 3, 3, 3, 3);
@@ -220,7 +238,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 	}
 
 	/**
-	 * Test method for {@link org.vadere.simulator.control.SourceController#update(double)}.
+	 * Test method for {@link SourceController#update(double)}.
 	 */
 	@Test
 	public void testUpdateUseFreeSpaceOnly() {
@@ -316,7 +334,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 	public void testSpawnRateGreaterThanUpdateRate() {
 		SourceTestAttributesBuilder builder = new SourceTestAttributesBuilder()
 				.setStartTime(0).setEndTime(1)
-				.setSpawnIntervalForConstantDistribution(0.3)
+				.setDistributionParams(0.3)
 				.setSourceDim(5.0, 5.0)
 				.setGroupSizeDistribution(0.0, 0.0, 0.25, 0.75)
 				.setGroupSizeDistributionMock(4, 3, 4, 4);
@@ -524,7 +542,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 
 
 	@Test
-	public void testCentroid() {
+	public void testCentroid() throws IOException {
 		AttributesSource attributesSource =
 				StateJsonConverter.deserializeObjectFromJson(sourceJson, AttributesSource.class);
 		Source source = new Source(attributesSource);
@@ -537,7 +555,7 @@ public class GroupSourceControllerTest extends TestSourceControllerUsingConstant
 	}
 
 	@Test
-	public void testSource() {
+	public void testSource() throws  IOException {
 		AttributesSource attributesSource =
 				StateJsonConverter.deserializeObjectFromJson(sourceJson, AttributesSource.class);
 

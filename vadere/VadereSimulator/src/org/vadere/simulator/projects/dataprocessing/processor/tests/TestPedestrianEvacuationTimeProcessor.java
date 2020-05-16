@@ -2,11 +2,10 @@ package org.vadere.simulator.projects.dataprocessing.processor.tests;
 
 import org.jetbrains.annotations.NotNull;
 import org.vadere.annotation.factories.dataprocessors.DataProcessorClass;
-import org.vadere.simulator.control.SimulationState;
+import org.vadere.simulator.control.simulation.SimulationState;
 import org.vadere.simulator.projects.dataprocessing.ProcessorManager;
 import org.vadere.simulator.projects.dataprocessing.datakey.PedestrianIdKey;
 import org.vadere.simulator.projects.dataprocessing.processor.PedestrianEvacuationTimeProcessor;
-import org.vadere.state.attributes.processor.AttributesTestNumberOverlapsProcessor;
 import org.vadere.state.attributes.processor.AttributesTestPedestrianEvacuationTimeProcessor;
 
 /**
@@ -42,14 +41,23 @@ public class TestPedestrianEvacuationTimeProcessor extends TestProcessor {
 
 	@Override
 	public void postLoop(SimulationState state) {
+
+		Double maximalEvacTime = getAttributes().getMaximalEvacuationTime();
+		Double minimalEvacTime = getAttributes().getMinimalEvacuationTime();
+
+		Double finishTime = state.getScenarioStore().getAttributesSimulation().getFinishTime();
+
+		// See issue #249, this is only for security such that the tests work correctly
+		if(finishTime <= maximalEvacTime){
+			handleAssertion(false,
+					"finishTime in Simulation options has to be larger than maximalEvacTime");
+		}
+
 		pedestrianEvacuationTimeProcessor.postLoop(state);
 
 		int invalidEvacuationTimes = 0;
 		for(PedestrianIdKey key : pedestrianEvacuationTimeProcessor.getKeys()) {
 			Double evacTime = pedestrianEvacuationTimeProcessor.getValue(key);
-
-			Double maximalEvacTime = getAttributes().getMaximalEvacuationTime();
-			Double minimalEvacTime = getAttributes().getMinimalEvacuationTime();
 
 			if((evacTime == Double.POSITIVE_INFINITY && maximalEvacTime != Double.POSITIVE_INFINITY) ||
 					(evacTime < minimalEvacTime || evacTime > maximalEvacTime)) {
@@ -63,7 +71,7 @@ public class TestPedestrianEvacuationTimeProcessor extends TestProcessor {
 	@Override
 	public AttributesTestPedestrianEvacuationTimeProcessor getAttributes() {
 		if (super.getAttributes() == null) {
-			setAttributes(new AttributesTestNumberOverlapsProcessor());
+			setAttributes(new AttributesTestPedestrianEvacuationTimeProcessor());
 		}
 
 		return (AttributesTestPedestrianEvacuationTimeProcessor)super.getAttributes();

@@ -6,20 +6,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import org.vadere.gui.components.utils.Resources;
+import org.apache.commons.configuration2.Configuration;
+import org.vadere.state.psychology.cognition.SelfCategory;
+import org.vadere.util.config.VadereConfig;
 import org.vadere.util.visualization.ColorHelper;
 
 public class DefaultSimulationConfig extends DefaultConfig {
-	private static Resources resources = Resources.getInstance("global");
-	private boolean showLogo = Boolean.valueOf(resources.getProperty("Logo.show"));
-	private double densityScale = Double.valueOf(resources.getProperty("Density.measurementscale"));
-	private double densityMeasurementRadius = Double.valueOf(resources.getProperty("Density.measurementradius"));
-	private double densityStandardDerivation = Double.valueOf(resources.getProperty("Density.standardderivation"));
-	private double pedestrianTorso = Double.valueOf(resources.getProperty("Pedestrian.Radius")) * 2;
 
-	private boolean useRandomPedestrianColors = false;
+	private static final Configuration CONFIG = VadereConfig.getConfig();
+
+	private boolean showLogo = CONFIG.getBoolean("SettingsDialog.showLogo");
+	private double densityScale = CONFIG.getDouble("Density.measurementScale");
+	private double densityMeasurementRadius = CONFIG.getDouble("Density.measurementRadius");
+	private double densityStandardDerivation = CONFIG.getDouble("Density.standardDeviation");
+	private double pedestrianTorso = CONFIG.getDouble("Pedestrian.radius") * 2;
+
+	private boolean interpolatePositions = true;
 	private boolean showPedestrianIds = false;
+	private boolean showPedestrianInOutGroup = false;
 	private boolean showTargets = true;
+	private boolean showTargetChangers = true;
 	private boolean showAbsorbingAreas = true;
 	private boolean showSources = true;
 	private boolean showObstacles = true;
@@ -34,12 +40,14 @@ public class DefaultSimulationConfig extends DefaultConfig {
 	private boolean showGrid = false;
 	private boolean showDensity = false;
 	private boolean showGroups = false;
-	protected final Color pedestrianDefaultColor = Color.BLUE;
+	protected final Color pedestrianDefaultColor = new Color(76, 114, 202);
 	private Map<Integer, Color> pedestrianColors = new TreeMap<>();
 	private Map<Integer, Color> randomColors = new HashMap<>();
-	private double gridWidth = Double.valueOf(resources.getProperty("ProjectView.cellWidth"));
-	private final double MIN_CELL_WIDTH = Double.valueOf(resources.getProperty("ProjectView.minCellWidth"));
-	private final double MAX_CELL_WIDTH = Double.valueOf(resources.getProperty("ProjectView.maxCellWidth"));
+	private Map<Integer, Color> selfCategoryColors = new HashMap<>();
+	private double gridWidth = CONFIG.getDouble("ProjectView.cellWidth");
+	private final double MIN_CELL_WIDTH = CONFIG.getDouble("ProjectView.minCellWidth");
+	private final double MAX_CELL_WIDTH = CONFIG.getDouble("ProjectView.maxCellWidth");
+	private AgentColoring agentColoring = AgentColoring.TARGET;
 
 	public DefaultSimulationConfig() {
 		super();
@@ -50,6 +58,7 @@ public class DefaultSimulationConfig extends DefaultConfig {
 
 		this.randomColors = new HashMap<>();
 		this.pedestrianColors = new HashMap<>();
+		this.selfCategoryColors = new HashMap<>();
 
 		for (Map.Entry<Integer, Color> entry : config.pedestrianColors.entrySet()) {
 			this.pedestrianColors.put(new Integer(entry.getKey()), new Color(entry.getValue().getRed(), entry
@@ -57,6 +66,7 @@ public class DefaultSimulationConfig extends DefaultConfig {
 		}
 
 		this.showPedestrianIds = config.showPedestrianIds;
+		this.showPedestrianInOutGroup = config.showPedestrianInOutGroup;
 		this.gridWidth = config.gridWidth;
 		this.showDensity = config.showDensity;
 		this.showTargetPotentialField = config.showTargetPotentialField;
@@ -68,6 +78,7 @@ public class DefaultSimulationConfig extends DefaultConfig {
 		this.showGroups = config.showGroups;
 		this.showPotentialField = config.showPotentialField;
 		this.showTargetPotentielFieldMesh = config.showTargetPotentielFieldMesh;
+		this.agentColoring = config.agentColoring;
 	}
 
 	public boolean isShowGroups() {
@@ -114,6 +125,8 @@ public class DefaultSimulationConfig extends DefaultConfig {
 		return showTargets;
 	}
 
+	public boolean isShowTargetChangers() { return showTargetChangers; }
+
 	public boolean isShowAbsorbingAreas() {
 		return showAbsorbingAreas;
 	}
@@ -133,6 +146,11 @@ public class DefaultSimulationConfig extends DefaultConfig {
 
 	public void setShowTargets(boolean showTargets) {
 		this.showTargets = showTargets;
+		setChanged();
+	}
+
+	public void setShowTargetChangers(boolean showTargetChangers) {
+		this.showTargetChangers = showTargetChangers;
 		setChanged();
 	}
 
@@ -259,6 +277,17 @@ public class DefaultSimulationConfig extends DefaultConfig {
 		}
 	}
 
+	public void setAgentColoring(final AgentColoring agentColoring) {
+		if(agentColoring != this.agentColoring) {
+			this.agentColoring = agentColoring;
+			setChanged();
+		}
+	}
+
+	public AgentColoring getAgentColoring() {
+		return agentColoring;
+	}
+
 	public void clearRandomColors() {
 		randomColors.clear();
 	}
@@ -270,15 +299,22 @@ public class DefaultSimulationConfig extends DefaultConfig {
 		return randomColors.get(pedId);
 	}
 
-	public void setUseRandomPedestrianColors(final boolean useRandomPedestrianColors) {
-		this.useRandomPedestrianColors = useRandomPedestrianColors;
+	public void setSelfCategoryColor(SelfCategory selfCategory, final Color color) {
+		this.selfCategoryColors.put(selfCategory.ordinal(), color);
+		setChanged();
 	}
 
-	public boolean isUseRandomPedestrianColors() {
-		return useRandomPedestrianColors;
+	public Color getSelfCategoryColor(SelfCategory selfCategory) {
+		Color color = getPedestrianDefaultColor();
+
+		if (selfCategoryColors.containsKey(selfCategory.ordinal())) {
+			color = selfCategoryColors.get(selfCategory.ordinal());
+		}
+
+		return color;
 	}
 
-	public void setGridWidth(double gridWidth) {
+	public void setGridWidth(final double gridWidth) {
 		this.gridWidth = gridWidth;
 	}
 
@@ -298,8 +334,27 @@ public class DefaultSimulationConfig extends DefaultConfig {
 		return showPedestrianIds;
 	}
 
+	public boolean isShowPedestrianInOutGroup() { return showPedestrianInOutGroup; }
+
 	public void setShowPedestrianIds(final boolean showPedestrianIds) {
 		this.showPedestrianIds = showPedestrianIds;
+	}
+
+	public void setShowPedestrianInOutGroup(final boolean showPedestrianInOutGroup) {
+		this.showPedestrianInOutGroup = showPedestrianInOutGroup;
+	}
+
+	public boolean isShowFaydedPedestrians() {
+		return false;
+	}
+
+	public boolean isInterpolatePositions() {
+		return interpolatePositions;
+	}
+
+	public void setInterpolatePositions(final boolean interpolatePositions) {
+		this.interpolatePositions = interpolatePositions;
+		setChanged();
 	}
 
 }

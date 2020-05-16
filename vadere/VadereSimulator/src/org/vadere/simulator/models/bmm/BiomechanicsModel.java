@@ -4,11 +4,12 @@ import org.jetbrains.annotations.NotNull;
 import org.vadere.annotation.factories.models.ModelClass;
 import org.vadere.simulator.models.MainModel;
 import org.vadere.simulator.models.Model;
+import org.vadere.simulator.projects.Domain;
 import org.vadere.state.attributes.Attributes;
 import org.vadere.state.attributes.models.AttributesBHM;
 import org.vadere.state.attributes.models.AttributesBMM;
 import org.vadere.state.attributes.scenario.AttributesAgent;
-import org.vadere.state.events.exceptions.UnsupportedEventException;
+import org.vadere.state.psychology.cognition.UnsupportedSelfCategoryException;
 import org.vadere.state.scenario.DynamicElement;
 import org.vadere.state.scenario.Pedestrian;
 import org.vadere.state.scenario.Topography;
@@ -45,22 +46,30 @@ public class BiomechanicsModel implements MainModel {
 	}
 
 	@Override
-	public void initialize(List<Attributes> modelAttributesList, Topography topography,
-			AttributesAgent attributesPedestrian, Random random) {
+	public void initialize(List<Attributes> modelAttributesList, Domain domain,
+	                       AttributesAgent attributesPedestrian, Random random) {
 		this.attributesBHM = Model.findAttributes(modelAttributesList, AttributesBHM.class);
 		this.attributesBMM = Model.findAttributes(modelAttributesList, AttributesBMM.class);
 		this.attributesPedestrian = attributesPedestrian;
-		this.topography = topography;
+		this.topography = domain.getTopography();
 		this.random = random;
 		this.models.add(this);
 	}
 
 	@Override
 	public <T extends DynamicElement> PedestrianBMM createElement(VPoint position, int id, Class<T> type) {
+		return createElement(position, id, this.attributesPedestrian, type);
+	}
+
+	@Override
+	public <T extends DynamicElement> PedestrianBMM createElement(VPoint position, int id, Attributes attr, Class<T> type) {
+
+		AttributesAgent aAttr = (AttributesAgent)attr;
+
 		if (!Pedestrian.class.isAssignableFrom(type))
 			throw new IllegalArgumentException("BMM cannot initialize " + type.getCanonicalName());
 		AttributesAgent pedAttributes = new AttributesAgent(
-				this.attributesPedestrian, registerDynamicElementId(topography, id));
+				aAttr, registerDynamicElementId(topography, id));
 
 		PedestrianBMM pedestrian = createElement(position, pedAttributes);
 		this.pedestriansBMM.add(pedestrian);
@@ -93,7 +102,7 @@ public class BiomechanicsModel implements MainModel {
 
 		List<VPoint> positions = pedestriansBMM.stream().map(ped -> ped.getPosition()).collect(Collectors.toList());
 
-		UnsupportedEventException.throwIfNotElapsedTimeEvent(pedestriansBMM, this.getClass());
+		UnsupportedSelfCategoryException.throwIfPedestriansNotTargetOrientied(pedestriansBMM, this.getClass());
 
 		for (PedestrianBMM agent : pedestriansBMM) {
 			agent.update(simTimeInSec, deltaTime);
@@ -110,7 +119,10 @@ public class BiomechanicsModel implements MainModel {
 		for(int i = 0; i < pedestriansBMM.size(); i++) {
 			PedestrianBMM agent = pedestriansBMM.get(i);
 			agent.clearFootSteps();
-			agent.getFootSteps().add(new FootStep(positions.get(i), agent.getPosition(), lastSimTimeInSec, simTimeInSec));
+
+			FootStep currentFootstep = new FootStep(positions.get(i), agent.getPosition(), lastSimTimeInSec, simTimeInSec);
+			agent.getTrajectory().add(currentFootstep);
+			agent.getFootstepHistory().add(currentFootstep);
 		}
 
 		this.lastSimTimeInSec = simTimeInSec;

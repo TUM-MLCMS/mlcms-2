@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.vadere.simulator.entrypoints.Version;
+import org.vadere.util.version.Version;
 import org.vadere.simulator.projects.migration.incident.incidents.AddTextNodeIncident;
 import org.vadere.simulator.projects.migration.incident.incidents.DeletionIncident;
 import org.vadere.simulator.projects.migration.incident.incidents.Incident;
@@ -17,9 +17,10 @@ import org.vadere.simulator.projects.migration.incident.incidents.RenameInArrayI
 import org.vadere.simulator.projects.migration.incident.incidents.RenameIncident;
 import org.vadere.simulator.projects.migration.incident.incidents.specialized.AttributesPotentialCompactVSosmIncident;
 import org.vadere.simulator.projects.migration.incident.incidents.specialized.MoveSpawnDelayIntoDistributionParametersIncident;
+import org.vadere.state.attributes.AttributesSimulation;
 import org.vadere.state.util.StateJsonConverter;
 
-import static org.vadere.simulator.entrypoints.Version.*;
+import static org.vadere.util.version.Version.*;
 
 public class IncidentDatabase {
 
@@ -41,7 +42,7 @@ public class IncidentDatabase {
 		addIncident(NOT_A_RELEASE, new RelocationIncident(
 				"finishTime",
 				path("vadere", "topography", "attributes"),
-				path("vadere", "attributesSimulation")));
+				path("vadere", AttributesSimulation.JSON_KEY)));
 
 		addIncident(NOT_A_RELEASE, new RelocationIncident(
 				"attributesPedestrian",

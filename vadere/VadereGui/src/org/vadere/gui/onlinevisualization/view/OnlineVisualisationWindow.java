@@ -3,26 +3,30 @@ package org.vadere.gui.onlinevisualization.view;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
+import org.apache.commons.configuration2.Configuration;
+import org.vadere.gui.components.control.ActionGeneratePoly;
 import org.vadere.gui.components.control.IViewportChangeListener;
 import org.vadere.gui.components.control.JViewportChangeListener;
 import org.vadere.gui.components.control.PanelResizeListener;
 import org.vadere.gui.components.control.ViewportChangeListener;
-import org.vadere.gui.components.utils.Messages;
-import org.vadere.gui.components.utils.Resources;
-import org.vadere.gui.components.utils.SwingUtils;
-import org.vadere.gui.components.view.ScenarioElementView;
-import org.vadere.gui.components.view.ScenarioScrollPane;
-import org.vadere.gui.components.view.SimulationInfoPanel;
+import org.vadere.gui.components.control.simulation.ActionGenerateINETenv;
 import org.vadere.gui.components.control.simulation.ActionGeneratePNG;
 import org.vadere.gui.components.control.simulation.ActionGenerateSVG;
 import org.vadere.gui.components.control.simulation.ActionGenerateTikz;
+import org.vadere.gui.components.control.simulation.ActionSwapSelectionMode;
+import org.vadere.gui.components.control.simulation.ActionVisualization;
+import org.vadere.gui.components.utils.Messages;
+import org.vadere.gui.components.utils.Resources;
+import org.vadere.gui.components.utils.SwingUtils;
+import org.vadere.gui.components.view.DialogFactory;
+import org.vadere.gui.components.view.ScenarioElementView;
+import org.vadere.gui.components.view.ScenarioScrollPane;
+import org.vadere.gui.components.view.SimulationInfoPanel;
 import org.vadere.gui.onlinevisualization.control.ActionOnlineVisMenu;
 import org.vadere.gui.onlinevisualization.control.ActionShowMesh;
 import org.vadere.gui.onlinevisualization.control.ActionShowPotentialField;
 import org.vadere.gui.onlinevisualization.model.OnlineVisualizationModel;
-import org.vadere.gui.components.control.simulation.ActionSwapSelectionMode;
-import org.vadere.gui.components.control.simulation.ActionVisualization;
-import org.vadere.gui.components.view.DialogFactory;
+import org.vadere.util.config.VadereConfig;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -36,11 +40,20 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 3522170593760789565L;
 	private static final Resources resources = Resources.getInstance("global");
-	private ScenarioElementView jsonPanel;
-	private JToolBar toolbar;
-	private SimulationInfoPanel infoPanel;
+	private static final Configuration CONFIG = VadereConfig.getConfig();
+
+
+	private JToolBar toolbar;				// top
+	private SimulationInfoPanel infoPanel;	// footer
+	private JScrollPane scenarioScrollPane; // left
+	private ScenarioElementView jsonPanel;  // right
+	private JSplitPane splitPaneForTopographyAndJsonPane; // container left/right
+	private MainPanel mainPanel;
+	private OnlineVisualizationModel model;
 
 	public OnlineVisualisationWindow(final MainPanel mainPanel, final OnlineVisualizationModel model) {
+		this.mainPanel = mainPanel;
+		this.model = model;
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		int windowHeight = screenSize.height - 250;
 
@@ -48,14 +61,15 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 		FormLayout spiltLayout = new FormLayout("2dlu, default:grow(0.75), 2dlu, default:grow(0.25), 2dlu", // col
 				"2dlu, default, 2dlu, fill:default:grow, 2dlu, default, 2dlu"); // rows
 
-		JScrollPane scrollPane = new ScenarioScrollPane(mainPanel, model);
+		scenarioScrollPane = new ScenarioScrollPane(mainPanel, model);
 		model.addScaleChangeListener(mainPanel);
 		mainPanel.addComponentListener(new PanelResizeListener(model));
-		mainPanel.setScrollPane(scrollPane);
-		scrollPane.getViewport()
-				.addChangeListener(new JViewportChangeListener(model, scrollPane.getVerticalScrollBar()));
+		mainPanel.setScrollPane(scenarioScrollPane);
+		scenarioScrollPane.getViewport()
+				.addChangeListener(new JViewportChangeListener(model, scenarioScrollPane.getVerticalScrollBar()));
+		model.addScrollPane(scenarioScrollPane);
 
-		IViewportChangeListener viewportChangeListener = new ViewportChangeListener(model, scrollPane);
+		IViewportChangeListener viewportChangeListener = new ViewportChangeListener(model, scenarioScrollPane);
 		model.addViewportChangeListener(viewportChangeListener);
 
 		jsonPanel = new ScenarioElementView(model);
@@ -66,10 +80,11 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 
 		this.toolbar = new JToolBar("OnlineVisualizationToolbar");
 		toolbar.setFloatable(false);
-		// toolbar.setBorderPainted(false);
+		toolbar.setBorderPainted(false);
 		toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
 		toolbar.setAlignmentY(Component.TOP_ALIGNMENT);
-		int toolbarSize = Integer.parseInt(resources.getProperty("Toolbar.size"));
+		// TODO: Should this be really configurable in a config file?
+		int toolbarSize = CONFIG.getInt("Gui.toolbar.size");
 		toolbar.setPreferredSize(new Dimension(toolbarSize, toolbarSize));
 
 		infoPanel = new SimulationInfoPanel(model);
@@ -79,10 +94,9 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 
 		setLayout(spiltLayout);
 
-
-		int iconHeight = Integer.valueOf(resources.getProperty("ProjectView.icon.height.value"));
-		int iconWidth = Integer.valueOf(resources.getProperty("ProjectView.icon.width.value"));
-
+		// TODO: Should this be really configurable in a config file?
+		int iconHeight = CONFIG.getInt("ProjectView.icon.height.value");
+		int iconWidth = CONFIG.getInt("ProjectView.icon.width.value");
 
 		AbstractAction openSettingsDialog = new ActionVisualization("settings", resources.getIcon("settings.png", iconWidth, iconHeight), model) {
 					@Override
@@ -174,7 +188,6 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 				renderer,
 				model);
 
-
 		ActionGenerateSVG generateSVG = new ActionGenerateSVG(
 				Messages.getString("ProjectView.btnSVGSnapshot.tooltip"),
 				resources.getIcon("camera_svg.png", iconWidth, iconHeight),
@@ -187,14 +200,26 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 				renderer,
 				model);
 
+		ActionGenerateINETenv generateINETenv = new ActionGenerateINETenv(
+				Messages.getString("ProjectView.btnINETSnapshot.tooltip"),
+				resources.getIcon("camera_tikz.png", iconWidth, iconHeight),
+				renderer,
+				model);
+
+		ActionGeneratePoly generatePoly = new ActionGeneratePoly(
+				Messages.getString("ProjectView.btnPolySnapshot.tooltip"),
+				resources.getIcon("camera_poly.png", iconWidth, iconHeight),
+				model);
+
         ActionShowPotentialField showPotentialField = new ActionShowPotentialField(
                 "showPotentialField",
-                resources.getIcon("potentialField.png", iconWidth, iconHeight),
+				resources.getIcon("potentialField.png", iconWidth, iconHeight),
                 model);
 
 		mainPanel.addRendererChangeListener(generatePNG);
 		mainPanel.addRendererChangeListener(generateSVG);
 		mainPanel.addRendererChangeListener(generateTikz);
+		mainPanel.addRendererChangeListener(generateINETenv);
 		mainPanel.addRendererChangeListener(showPotentialField);
 
 
@@ -222,6 +247,8 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 		imgOptions.add(generatePNG);
 		imgOptions.add(generateSVG);
 		imgOptions.add(generateTikz);
+		imgOptions.add(generateINETenv);
+		imgOptions.add(generatePoly);
 
 		ActionOnlineVisMenu imgDialog = new ActionOnlineVisMenu(
 				"camera_menu",
@@ -237,10 +264,16 @@ public class OnlineVisualisationWindow extends JPanel implements Observer {
 		SwingUtils.addActionToToolbar(toolbar, openSettingsDialog,
 				Messages.getString("ProjectView.btnSettings.tooltip"));
 
+		splitPaneForTopographyAndJsonPane = new JSplitPane();
+		splitPaneForTopographyAndJsonPane.setResizeWeight(0.8);
+		splitPaneForTopographyAndJsonPane.resetToPreferredSizes();
+		splitPaneForTopographyAndJsonPane.setLeftComponent(scenarioScrollPane);
+		splitPaneForTopographyAndJsonPane.setRightComponent(jsonPanel);
+
+		scenarioScrollPane.setPreferredSize(new Dimension(1, windowHeight));
+
 		add(toolbar, cc.xyw(2, 2, 3));
-		add(scrollPane, cc.xy(2, 4));
-		scrollPane.setPreferredSize(new Dimension(1, windowHeight));
-		add(jsonPanel, cc.xy(4, 4));
+		add(splitPaneForTopographyAndJsonPane, cc.xywh(2, 4, 4, 1));
 		add(infoPanel, cc.xyw(2, 6, 3));
 
 		repaint();
