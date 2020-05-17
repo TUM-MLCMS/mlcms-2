@@ -189,7 +189,7 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 		// check the positions of all pedestrians and switch groups to INFECTED (or REMOVED).
 		DynamicElementContainer<Pedestrian> c = topography.getPedestrianDynamicElements();
 
-		if(this.secondCounter < 5) {
+		if(this.secondCounter < 1) {
 			this.secondCounter = this.secondCounter + (simTimeInSec - previousTimeStep);
 		}
 

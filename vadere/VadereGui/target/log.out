@@ -1,162 +1,147 @@
-00:00:32,125   INFO STDOUTERR:15 - Redirect StdOut and StdErr
-00:00:32,128   INFO VadereApplication:25 - starting Vadere GUI...
-00:00:32,147   INFO VadereConfig:66 - Use config file from path C:\Users\kdras\.config\vadere.conf
-00:00:33,633   INFO IOVadere:57 - read project: C:\Users\kdras\Desktop\VadereTest\vadere.project
-00:00:33,723   INFO IOVadere:67 - analyzed scenario files.
-00:00:45,108   INFO IOVadere:88 - analyzed: 18, migrated: 0, upToDate: 18, notMigratable: 0
-00:00:54,857   INFO IOVadere:93 - project loaded: Test
-00:00:54,862   INFO ActionLoadProject:113 - refreshed output table - 2
-00:00:54,864   INFO ProjectView:614 - selected scenario 'Test'
-00:00:55,041   INFO DataProcessingView:102 - switch to expert view
-00:00:55,281   INFO ProjectView:620 - repainted output table
-00:00:55,281   INFO ActionLoadProject:117 - selected the first scenario
-00:00:55,291   INFO ActionLoadProject:124 - project 'Test' loaded.
-00:01:00,231   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
-00:01:00,235   INFO ScenarioRun:150 - Initializing scenario: Test...
-00:01:00,240   INFO ScenarioRun:131 - scenario context initialized.
-00:01:00,242   INFO ScenarioRun:214 - no background mesh Test.poly was found.
-00:01:00,342   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
-00:01:00,353   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
-00:01:00,433   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
-00:01:00,482   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
-00:01:00,526   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
-00:01:00,556   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
-00:01:00,579   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
-00:01:00,603   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
-00:01:00,625   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
-00:01:00,648   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
-00:01:00,671   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
-00:01:00,694   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:348[ms]
-00:01:00,696   INFO Topography:393 - Set PedestrianIdCount to start value: 1
-00:01:00,901   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:174[ms]
-00:01:00,995   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:76[ms]
-00:01:01,078   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:71[ms]
-00:01:01,088   INFO Simulation:254 - preLoop finished.
-00:01:01,531   INFO ActionPauseScenario:32 - all running scenarios paused
-00:01:20,497   INFO Simulation:344 - Finished writing all output files
-00:01:20,499   INFO ProjectView:169 - scenario Test finished
-00:01:20,642   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=25, state='"SimulationRun completed"}
-00:01:20,644   INFO ScenarioRun:232 - Simulation of scenario Test finished.
-00:01:20,647   INFO ProjectView:614 - selected scenario 'Test'
-00:01:20,754   INFO ProjectView:620 - repainted output table
-00:03:54,081   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
-00:03:54,083   INFO ScenarioRun:150 - Initializing scenario: Test...
-00:03:54,084   INFO ScenarioRun:131 - scenario context initialized.
-00:03:54,085   INFO ScenarioRun:214 - no background mesh Test.poly was found.
-00:03:54,114   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
-00:03:54,116   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
-00:03:54,155   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
-00:03:54,178   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
-00:03:54,210   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
-00:03:54,239   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
-00:03:54,280   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
-00:03:54,309   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
-00:03:54,343   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
-00:03:54,365   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
-00:03:54,394   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
-00:03:54,418   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:304[ms]
-00:03:54,418   INFO Topography:393 - Set PedestrianIdCount to start value: 1
-00:03:54,505   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:77[ms]
-00:03:54,578   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:57[ms]
-00:03:54,643   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:55[ms]
-00:03:54,650   INFO Simulation:254 - preLoop finished.
-00:04:16,405   INFO Simulation:514 - Simulation interrupted.
-00:04:16,572   INFO Simulation:344 - Finished writing all output files
-00:04:16,709   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=25, state='"SimulationRun completed"}
-00:04:16,710   INFO ScenarioRun:232 - Simulation of scenario Test finished.
-00:04:16,729   INFO ProjectView:169 - scenario Test finished
-00:04:16,733   INFO ProjectView:614 - selected scenario 'Test'
-00:04:16,854   INFO ProjectView:620 - repainted output table
-00:04:16,871   INFO ProjectView:614 - selected scenario 'Test'
-00:04:17,021   INFO ProjectView:620 - repainted output table
-00:04:17,021   INFO ProjectView:195 - all running scenarios interrupted
-00:04:55,964   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
-00:04:55,965   INFO ScenarioRun:150 - Initializing scenario: Test...
-00:04:55,966   INFO ScenarioRun:131 - scenario context initialized.
-00:04:55,966   INFO ScenarioRun:214 - no background mesh Test.poly was found.
-00:04:56,277   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
-00:04:56,279   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
-00:04:56,291   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
-00:04:56,303   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
-00:04:56,322   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
-00:04:56,335   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
-00:04:56,347   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
-00:04:56,362   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
-00:04:56,382   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
-00:04:56,394   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
-00:04:56,406   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
-00:04:56,418   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:141[ms]
-00:04:56,418   INFO Topography:393 - Set PedestrianIdCount to start value: 1
-00:04:56,480   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:53[ms]
-00:04:56,494   INFO Simulation:254 - preLoop finished.
-00:05:05,851 STDERR STDOUTERR:32 - Exception in thread "AWT-EventQueue-0" 
-00:05:05,852 STDERR STDOUTERR:32 - java.lang.IllegalStateException: Received trigger to resume the simulation, but it is not paused!
-00:05:05,852 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.resume(ScenarioRun.java:284)
-00:05:05,852 STDERR STDOUTERR:32 - 	at org.vadere.simulator.projects.VadereProject.resumePausedScenarios(VadereProject.java:187)
-00:05:05,852 STDERR STDOUTERR:32 - 	at org.vadere.gui.projectview.control.ActionResumeNormalSpeed.actionPerformed(ActionResumeNormalSpeed.java:25)
-00:05:05,852 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.AbstractButton.fireActionPerformed(AbstractButton.java:1967)
-00:05:05,852 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.AbstractButton$Handler.actionPerformed(AbstractButton.java:2308)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.DefaultButtonModel.fireActionPerformed(DefaultButtonModel.java:405)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.DefaultButtonModel.setPressed(DefaultButtonModel.java:262)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.plaf.basic.BasicButtonListener.mouseReleased(BasicButtonListener.java:279)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.processMouseEvent(Component.java:6636)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.JComponent.processMouseEvent(JComponent.java:3342)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.processEvent(Component.java:6401)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Container.processEvent(Container.java:2263)
-00:05:05,853 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.dispatchEventImpl(Component.java:5012)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Container.dispatchEventImpl(Container.java:2321)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.dispatchEvent(Component.java:4844)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.LightweightDispatcher.retargetMouseEvent(Container.java:4919)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.LightweightDispatcher.processMouseEvent(Container.java:4548)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.LightweightDispatcher.dispatchEvent(Container.java:4489)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Container.dispatchEventImpl(Container.java:2307)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Window.dispatchEventImpl(Window.java:2764)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.dispatchEvent(Component.java:4844)
-00:05:05,854 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:772)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:721)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:715)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:391)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:85)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:95)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:745)
-00:05:05,855 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:743)
-00:05:05,856 STDERR STDOUTERR:32 - 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:391)
-00:05:05,856 STDERR STDOUTERR:32 - 	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:85)
-00:05:05,856 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:742)
-00:05:05,856 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:203)
-00:05:05,856 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:124)
-00:05:05,857 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:113)
-00:05:05,857 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:109)
-00:05:05,857 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
-00:05:05,857 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)
-00:07:45,302   INFO Simulation:344 - Finished writing all output files
-00:07:45,303   INFO ProjectView:169 - scenario Test finished
-00:07:48,649   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=490392, state='"SimulationRun completed"}
-00:07:48,650   INFO ScenarioRun:232 - Simulation of scenario Test finished.
-00:07:48,653   INFO ProjectView:614 - selected scenario 'Test'
-00:07:48,766   INFO ProjectView:620 - repainted output table
-00:08:52,487   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
-00:08:52,489   INFO ScenarioRun:150 - Initializing scenario: Test...
-00:08:52,489   INFO ScenarioRun:131 - scenario context initialized.
-00:08:52,490   INFO ScenarioRun:214 - no background mesh Test.poly was found.
-00:08:52,861   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
-00:08:52,863   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
-00:08:52,875   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
-00:08:52,887   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
-00:08:52,899   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
-00:08:52,911   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
-00:08:52,922   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
-00:08:52,934   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
-00:08:52,947   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
-00:08:52,959   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
-00:08:52,971   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
-00:08:52,983   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:121[ms]
-00:08:52,984   INFO Topography:393 - Set PedestrianIdCount to start value: 1
-00:08:53,017   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:29[ms]
-00:08:53,025   INFO Simulation:254 - preLoop finished.
-00:09:58,132   INFO Simulation:344 - Finished writing all output files
-00:09:58,133   INFO ProjectView:169 - scenario Test finished
-00:09:59,445   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=196392, state='"SimulationRun completed"}
-00:09:59,447   INFO ScenarioRun:232 - Simulation of scenario Test finished.
-00:09:59,449   INFO ProjectView:614 - selected scenario 'Test'
-00:09:59,569   INFO ProjectView:620 - repainted output table
+01:01:37,206   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+01:01:37,209   INFO VadereApplication:25 - starting Vadere GUI...
+01:01:37,228   INFO VadereConfig:66 - Use config file from path C:\Users\kdras\.config\vadere.conf
+01:01:38,690   INFO IOVadere:57 - read project: C:\Users\kdras\Desktop\VadereTest\vadere.project
+01:01:38,803   INFO IOVadere:67 - analyzed scenario files.
+01:01:54,598  ERROR IOOutput:82 - Error in output file Test_2020-05-17_00-58-48.289
+01:01:54,601   INFO IOOutput:200 - The directory 'Test_2020-05-17_00-58-48.289' is corrupted and was moved to the 'corrupt' folder.
+01:01:54,602   INFO IOVadere:88 - analyzed: 24, migrated: 0, upToDate: 24, notMigratable: 0
+01:02:09,078   INFO IOVadere:93 - project loaded: Test
+01:02:09,083   INFO ActionLoadProject:113 - refreshed output table - 2
+01:02:09,086   INFO ProjectView:614 - selected scenario 'Test'
+01:02:09,284   INFO DataProcessingView:102 - switch to expert view
+01:02:09,565   INFO ProjectView:620 - repainted output table
+01:02:09,565   INFO ActionLoadProject:117 - selected the first scenario
+01:02:09,578   INFO ActionLoadProject:124 - project 'Test' loaded.
+01:02:13,525   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
+01:02:13,529   INFO ScenarioRun:150 - Initializing scenario: Test...
+01:02:13,534   INFO ScenarioRun:131 - scenario context initialized.
+01:02:13,537   INFO ScenarioRun:214 - no background mesh Test.poly was found.
+01:02:13,650   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
+01:02:13,658   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
+01:02:13,742   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
+01:02:13,801   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
+01:02:13,856   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
+01:02:13,881   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
+01:02:13,906   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
+01:02:13,927   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
+01:02:13,951   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
+01:02:13,972   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
+01:02:14,003   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
+01:02:14,030   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:377[ms]
+01:02:14,031   INFO Topography:393 - Set PedestrianIdCount to start value: 1
+01:02:14,242   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:177[ms]
+01:02:14,327   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:68[ms]
+01:02:14,418   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:73[ms]
+01:02:14,429   INFO Simulation:254 - preLoop finished.
+01:02:17,813 STDERR STDOUTERR:32 - Exception in thread "AWT-EventQueue-0" 
+01:02:17,815 STDERR STDOUTERR:32 - java.lang.IllegalArgumentException: (was java.util.ConcurrentModificationException) (through reference chain: org.vadere.simulator.projects.ScenarioStore["topography"]->org.vadere.state.scenario.Topography["targetChangers"]->java.util.LinkedList[0]->org.vadere.state.scenario.TargetChanger["enteringTimes"])
+01:02:17,816 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ObjectMapper._convert(ObjectMapper.java:3750)
+01:02:17,816 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ObjectMapper.convertValue(ObjectMapper.java:3668)
+01:02:17,816 STDERR STDOUTERR:32 - 	at org.vadere.state.util.StateJsonConverter.getScenarioStoreHash(StateJsonConverter.java:395)
+01:02:17,816 STDERR STDOUTERR:32 - 	at org.vadere.simulator.projects.ScenarioStore.hashOfJsonRepresentation(ScenarioStore.java:86)
+01:02:17,816 STDERR STDOUTERR:32 - 	at org.vadere.simulator.projects.ProjectOutput.listSelectedOutputDirs(ProjectOutput.java:84)
+01:02:17,816 STDERR STDOUTERR:32 - 	at org.vadere.gui.projectview.model.ProjectViewModel.getRunningScenario(ProjectViewModel.java:226)
+01:02:17,816 STDERR STDOUTERR:32 - 	at org.vadere.gui.projectview.control.ActionPauseScenario.actionPerformed(ActionPauseScenario.java:26)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.AbstractButton.fireActionPerformed(AbstractButton.java:1967)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.AbstractButton$Handler.actionPerformed(AbstractButton.java:2308)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.DefaultButtonModel.fireActionPerformed(DefaultButtonModel.java:405)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.DefaultButtonModel.setPressed(DefaultButtonModel.java:262)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.plaf.basic.BasicButtonListener.mouseReleased(BasicButtonListener.java:279)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.processMouseEvent(Component.java:6636)
+01:02:17,817 STDERR STDOUTERR:32 - 	at java.desktop/javax.swing.JComponent.processMouseEvent(JComponent.java:3342)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.processEvent(Component.java:6401)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Container.processEvent(Container.java:2263)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.dispatchEventImpl(Component.java:5012)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Container.dispatchEventImpl(Container.java:2321)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.dispatchEvent(Component.java:4844)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.LightweightDispatcher.retargetMouseEvent(Container.java:4919)
+01:02:17,818 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.LightweightDispatcher.processMouseEvent(Container.java:4548)
+01:02:17,819 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.LightweightDispatcher.dispatchEvent(Container.java:4489)
+01:02:17,819 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Container.dispatchEventImpl(Container.java:2307)
+01:02:17,819 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Window.dispatchEventImpl(Window.java:2764)
+01:02:17,819 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.Component.dispatchEvent(Component.java:4844)
+01:02:17,820 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:772)
+01:02:17,820 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:721)
+01:02:17,820 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:715)
+01:02:17,820 STDERR STDOUTERR:32 - 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:391)
+01:02:17,820 STDERR STDOUTERR:32 - 	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:85)
+01:02:17,821 STDERR STDOUTERR:32 - 	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:95)
+01:02:17,821 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:745)
+01:02:17,821 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:743)
+01:02:17,821 STDERR STDOUTERR:32 - 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:391)
+01:02:17,822 STDERR STDOUTERR:32 - 	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:85)
+01:02:17,822 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:742)
+01:02:17,822 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:203)
+01:02:17,822 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:124)
+01:02:17,822 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:113)
+01:02:17,823 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:109)
+01:02:17,823 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
+01:02:17,823 STDERR STDOUTERR:32 - 	at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)
+01:02:17,823 STDERR STDOUTERR:32 - Caused by: com.fasterxml.jackson.databind.JsonMappingException: (was java.util.ConcurrentModificationException) (through reference chain: org.vadere.simulator.projects.ScenarioStore["topography"]->org.vadere.state.scenario.Topography["targetChangers"]->java.util.LinkedList[0]->org.vadere.state.scenario.TargetChanger["enteringTimes"])
+01:02:17,823 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.JsonMappingException.wrapWithPath(JsonMappingException.java:391)
+01:02:17,823 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.JsonMappingException.wrapWithPath(JsonMappingException.java:351)
+01:02:17,824 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.StdSerializer.wrapAndThrow(StdSerializer.java:316)
+01:02:17,824 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.BeanSerializerBase.serializeFields(BeanSerializerBase.java:727)
+01:02:17,824 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.BeanSerializer.serialize(BeanSerializer.java:155)
+01:02:17,824 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serializeContents(CollectionSerializer.java:145)
+01:02:17,824 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serialize(CollectionSerializer.java:107)
+01:02:17,824 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serialize(CollectionSerializer.java:25)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.BeanPropertyWriter.serializeAsField(BeanPropertyWriter.java:727)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.BeanSerializerBase.serializeFields(BeanSerializerBase.java:719)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.BeanSerializer.serialize(BeanSerializer.java:155)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.BeanPropertyWriter.serializeAsField(BeanPropertyWriter.java:727)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.BeanSerializerBase.serializeFields(BeanSerializerBase.java:719)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.BeanSerializer.serialize(BeanSerializer.java:155)
+01:02:17,825 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.DefaultSerializerProvider._serialize(DefaultSerializerProvider.java:480)
+01:02:17,826 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.DefaultSerializerProvider.serializeValue(DefaultSerializerProvider.java:319)
+01:02:17,826 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ObjectMapper._convert(ObjectMapper.java:3728)
+01:02:17,826 STDERR STDOUTERR:32 - 	... 41 more
+01:02:17,826 STDERR STDOUTERR:32 - Caused by: java.util.ConcurrentModificationException
+01:02:17,826 STDERR STDOUTERR:32 - 	at java.base/java.util.HashMap$HashIterator.nextNode(HashMap.java:1584)
+01:02:17,826 STDERR STDOUTERR:32 - 	at java.base/java.util.HashMap$EntryIterator.next(HashMap.java:1617)
+01:02:17,827 STDERR STDOUTERR:32 - 	at java.base/java.util.HashMap$EntryIterator.next(HashMap.java:1615)
+01:02:17,827 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.MapSerializer.serializeFieldsUsing(MapSerializer.java:798)
+01:02:17,827 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.MapSerializer.serialize(MapSerializer.java:637)
+01:02:17,827 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.MapSerializer.serialize(MapSerializer.java:33)
+01:02:17,827 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.BeanPropertyWriter.serializeAsField(BeanPropertyWriter.java:727)
+01:02:17,827 STDERR STDOUTERR:32 - 	at com.fasterxml.jackson.databind.ser.std.BeanSerializerBase.serializeFields(BeanSerializerBase.java:719)
+01:02:17,827 STDERR STDOUTERR:32 - 	... 54 more
+01:02:26,757   INFO Simulation:514 - Simulation interrupted.
+01:02:27,052   INFO Simulation:344 - Finished writing all output files
+01:02:27,209   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=25, state='"SimulationRun completed"}
+01:02:27,210   INFO ScenarioRun:232 - Simulation of scenario Test finished.
+01:02:27,231   INFO ProjectView:169 - scenario Test finished
+01:02:27,235   INFO ProjectView:614 - selected scenario 'Test'
+01:02:27,332   INFO ProjectView:620 - repainted output table
+01:02:27,357   INFO ProjectView:614 - selected scenario 'Test'
+01:02:27,505   INFO ProjectView:620 - repainted output table
+01:02:27,506   INFO ProjectView:195 - all running scenarios interrupted
+01:02:29,287   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
+01:02:29,289   INFO ScenarioRun:150 - Initializing scenario: Test...
+01:02:29,289   INFO ScenarioRun:131 - scenario context initialized.
+01:02:29,290   INFO ScenarioRun:214 - no background mesh Test.poly was found.
+01:02:29,317   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
+01:02:29,321   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
+01:02:29,382   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
+01:02:29,410   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
+01:02:29,439   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
+01:02:29,462   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
+01:02:29,482   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
+01:02:29,510   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
+01:02:29,531   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
+01:02:29,552   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
+01:02:29,573   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
+01:02:29,603   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:285[ms]
+01:02:29,604   INFO Topography:393 - Set PedestrianIdCount to start value: 1
+01:02:29,680   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:63[ms]
+01:02:29,756   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:63[ms]
+01:02:29,832   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:66[ms]
+01:02:29,839   INFO Simulation:254 - preLoop finished.
+01:02:43,813   INFO Simulation:344 - Finished writing all output files
+01:02:43,813   INFO ProjectView:169 - scenario Test finished
+01:02:43,987   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=25, state='"SimulationRun completed"}
+01:02:43,989   INFO ScenarioRun:232 - Simulation of scenario Test finished.
+01:02:43,991   INFO ProjectView:614 - selected scenario 'Test'
+01:02:44,145   INFO ProjectView:620 - repainted output table
+01:21:20,793   INFO ActionCloseApplication:28 - closing application...
