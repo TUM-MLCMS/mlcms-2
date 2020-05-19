@@ -1,0 +1,215 @@
+23:55:51,714   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+23:55:51,717   INFO ScenarioRunSubCommand:52 - Created output directory: C:\output
+23:55:52,011 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+23:55:52,026   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+23:55:52,105   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\__cache__
+23:55:52,110   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+23:55:52,113   INFO ScenarioRun:131 - scenario context initialized.
+23:55:52,115  ERROR ScenarioRun:197 - Simulation failed
+java.lang.NullPointerException: null
+	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211) ~[vadere-console.jar:?]
+	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40) ~[vadere-console.jar:?]
+23:55:52,125   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
+23:55:52,125 STDERR STDOUTERR:32 - java.lang.RuntimeException: Simulation failed.
+23:55:52,126 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:198)
+23:55:52,126 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69)
+23:55:52,126 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40)
+23:55:52,127 STDERR STDOUTERR:32 - Caused by: java.lang.NullPointerException
+23:55:52,127 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211)
+23:55:52,127 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155)
+23:55:52,128 STDERR STDOUTERR:32 - 	... 2 more
+23:55:52,128  ERROR ScenarioRunSubCommand:75 - java.lang.RuntimeException: Simulation failed.
+23:56:17,971   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+23:56:17,973   INFO ScenarioRunSubCommand:55 - Use output directory: C:\output
+23:56:18,252 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+23:56:18,268   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+23:56:18,348   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\__cache__
+23:56:18,353   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+23:56:18,356   INFO ScenarioRun:131 - scenario context initialized.
+23:56:18,358  ERROR ScenarioRun:197 - Simulation failed
+java.lang.NullPointerException: null
+	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211) ~[vadere-console.jar:?]
+	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40) ~[vadere-console.jar:?]
+23:56:18,365   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
+23:56:18,366 STDERR STDOUTERR:32 - java.lang.RuntimeException: Simulation failed.
+23:56:18,366 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:198)
+23:56:18,366 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69)
+23:56:18,367 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40)
+23:56:18,367 STDERR STDOUTERR:32 - Caused by: java.lang.NullPointerException
+23:56:18,368 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211)
+23:56:18,368 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155)
+23:56:18,368 STDERR STDOUTERR:32 - 	... 2 more
+23:56:18,369  ERROR ScenarioRunSubCommand:75 - java.lang.RuntimeException: Simulation failed.
+23:56:24,560   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+23:56:24,562   INFO ScenarioRunSubCommand:55 - Use output directory: C:\output
+23:56:24,840 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+23:56:24,855   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+23:56:24,932   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\__cache__
+23:56:24,937   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+23:56:24,941   INFO ScenarioRun:131 - scenario context initialized.
+23:56:24,942  ERROR ScenarioRun:197 - Simulation failed
+java.lang.NullPointerException: null
+	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211) ~[vadere-console.jar:?]
+	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40) ~[vadere-console.jar:?]
+23:56:24,945   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
+23:56:24,946 STDERR STDOUTERR:32 - java.lang.RuntimeException: Simulation failed.
+23:56:24,953 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:198)
+23:56:24,953 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69)
+23:56:24,954 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40)
+23:56:24,954 STDERR STDOUTERR:32 - Caused by: java.lang.NullPointerException
+23:56:24,954 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211)
+23:56:24,955 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155)
+23:56:24,955 STDERR STDOUTERR:32 - 	... 2 more
+23:56:24,956  ERROR ScenarioRunSubCommand:75 - java.lang.RuntimeException: Simulation failed.
+23:56:36,582   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+23:56:36,584   INFO ScenarioRunSubCommand:55 - Use output directory: C:\output
+23:56:36,859 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+23:56:36,874   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+23:56:36,951   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\__cache__
+23:56:36,956   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+23:56:36,960   INFO ScenarioRun:131 - scenario context initialized.
+23:56:36,961  ERROR ScenarioRun:197 - Simulation failed
+java.lang.NullPointerException: null
+	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211) ~[vadere-console.jar:?]
+	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40) ~[vadere-console.jar:?]
+23:56:36,964   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
+23:56:36,964 STDERR STDOUTERR:32 - java.lang.RuntimeException: Simulation failed.
+23:56:36,965 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:198)
+23:56:36,965 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69)
+23:56:36,965 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40)
+23:56:36,966 STDERR STDOUTERR:32 - Caused by: java.lang.NullPointerException
+23:56:36,966 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211)
+23:56:36,966 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155)
+23:56:36,967 STDERR STDOUTERR:32 - 	... 2 more
+23:56:36,967  ERROR ScenarioRunSubCommand:75 - java.lang.RuntimeException: Simulation failed.
+23:56:59,169   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+23:56:59,171   INFO ScenarioRunSubCommand:55 - Use output directory: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\output
+23:56:59,449 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+23:56:59,465   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+23:56:59,544   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\__cache__
+23:56:59,549   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+23:56:59,553   INFO ScenarioRun:131 - scenario context initialized.
+23:56:59,554  ERROR ScenarioRun:197 - Simulation failed
+java.lang.NullPointerException: null
+	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211) ~[vadere-console.jar:?]
+	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69) ~[vadere-console.jar:?]
+	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40) ~[vadere-console.jar:?]
+23:56:59,565   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
+23:56:59,565 STDERR STDOUTERR:32 - java.lang.RuntimeException: Simulation failed.
+23:56:59,566 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:198)
+23:56:59,566 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.commands.ScenarioRunSubCommand.run(ScenarioRunSubCommand.java:69)
+23:56:59,567 STDERR STDOUTERR:32 - 	at org.vadere.simulator.entrypoints.cmd.VadereConsole.main(VadereConsole.java:40)
+23:56:59,567 STDERR STDOUTERR:32 - Caused by: java.lang.NullPointerException
+23:56:59,567 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.loadBackgroundMesh(ScenarioRun.java:211)
+23:56:59,568 STDERR STDOUTERR:32 - 	at org.vadere.simulator.control.simulation.ScenarioRun.run(ScenarioRun.java:155)
+23:56:59,568 STDERR STDOUTERR:32 - 	... 2 more
+23:56:59,569  ERROR ScenarioRunSubCommand:75 - java.lang.RuntimeException: Simulation failed.
+23:58:32,877   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+23:58:32,879   INFO ScenarioRunSubCommand:55 - Use output directory: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\output
+23:58:33,124 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+23:58:33,146   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+23:58:33,228   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\.\__cache__
+23:58:33,232   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+23:58:33,236   INFO ScenarioRun:131 - scenario context initialized.
+23:58:33,243   INFO ScenarioRun:214 - no background mesh Rimea_6_Corner.poly was found.
+23:58:33,304   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
+23:58:33,308   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/17161 [points]
+23:58:33,328   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 1717/17161 [points]
+23:58:33,338   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 3433/17161 [points]
+23:58:33,349   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 5149/17161 [points]
+23:58:33,357   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 6865/17161 [points]
+23:58:33,364   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 8581/17161 [points]
+23:58:33,370   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 10297/17161 [points]
+23:58:33,381   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 12013/17161 [points]
+23:58:33,386   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 13729/17161 [points]
+23:58:33,397   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 15445/17161 [points]
+23:58:33,403   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:96[ms]
+23:58:33,411   INFO Topography:393 - Set PedestrianIdCount to start value: 1
+23:58:33,439   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:18[ms]
+23:58:33,441   INFO Simulation:254 - preLoop finished.
+23:58:41,198   INFO Simulation:344 - Finished writing all output files
+23:58:41,198   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
+00:00:30,788   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+00:00:30,790   INFO ScenarioRunSubCommand:55 - Use output directory: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\output
+00:00:31,036 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+00:00:31,056   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+00:00:31,134   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\.\__cache__
+00:00:31,139   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+00:00:31,143   INFO ScenarioRun:131 - scenario context initialized.
+00:00:31,145   INFO ScenarioRun:214 - no background mesh Rimea_6_Corner.poly was found.
+00:00:31,202   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
+00:00:31,206   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/17161 [points]
+00:00:31,227   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 1717/17161 [points]
+00:00:31,237   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 3433/17161 [points]
+00:00:31,249   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 5149/17161 [points]
+00:00:31,262   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 6865/17161 [points]
+00:00:31,270   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 8581/17161 [points]
+00:00:31,280   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 10297/17161 [points]
+00:00:31,285   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 12013/17161 [points]
+00:00:31,294   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 13729/17161 [points]
+00:00:31,299   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 15445/17161 [points]
+00:00:31,312   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:108[ms]
+00:00:31,315   INFO Topography:393 - Set PedestrianIdCount to start value: 1
+00:00:31,359   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:18[ms]
+00:00:31,360   INFO Simulation:254 - preLoop finished.
+00:03:12,420   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+00:03:12,422   INFO ScenarioRunSubCommand:55 - Use output directory: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\output
+00:03:12,423  ERROR ScenarioRunSubCommand:60 - scenario-file does not exist, is not a regular file or you do not have read permissions: .\output.scenario
+00:03:20,470   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+00:03:20,472   INFO ScenarioRunSubCommand:55 - Use output directory: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\output
+00:03:20,749 STDOUT STDOUTERR:22 - Topography Warning:
+   Target contains an obstacle. This setup works but reduces the actual size of the target. 
+   Obstacle overlaps with a source. This setup will spawn pedestrians within the obstacle.  
+
+00:03:20,764   INFO VadereConfig:66 - Use config file from path C:\Users\okmmj\.config\vadere.conf
+00:03:20,843   INFO ScenarioCache:85 - Cache search location: C:\coursework\in2106\mlcms-2\mlcms-2\vadere-tool\.\__cache__
+00:03:20,848   INFO ScenarioRun:150 - Initializing scenario: Rimea_6_Corner...
+00:03:20,851   INFO ScenarioRun:131 - scenario context initialized.
+00:03:20,853   INFO ScenarioRun:214 - no background mesh Rimea_6_Corner.poly was found.
+00:03:20,900   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
+00:03:20,905   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/17161 [points]
+00:03:20,930   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 1717/17161 [points]
+00:03:20,940   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 3433/17161 [points]
+00:03:20,953   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 5149/17161 [points]
+00:03:20,967   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 6865/17161 [points]
+00:03:20,973   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 8581/17161 [points]
+00:03:20,983   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 10297/17161 [points]
+00:03:20,988   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 12013/17161 [points]
+00:03:21,000   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 13729/17161 [points]
+00:03:21,005   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 15445/17161 [points]
+00:03:21,021   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:118[ms]
+00:03:21,023   INFO Topography:393 - Set PedestrianIdCount to start value: 2
+00:03:21,056   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:17[ms]
+00:03:21,063   INFO Simulation:254 - preLoop finished.
+00:03:28,795   INFO Simulation:344 - Finished writing all output files
+00:03:28,797   INFO ScenarioRun:232 - Simulation of scenario Rimea_6_Corner finished.
