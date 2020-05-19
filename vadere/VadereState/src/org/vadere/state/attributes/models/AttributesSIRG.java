@@ -12,11 +12,16 @@ public class AttributesSIRG extends Attributes {
 	private int infectionsAtStart = 0;
 	private double infectionRate = 0.01;
 	private double infectionMaxDistance = 1;
+	private double recoverRate = 0.002;
 
 	public int getInfectionsAtStart() { return infectionsAtStart; }
 
 	public double getInfectionRate() {
 		return infectionRate;
+	}
+
+	public double getRecoverRate() {
+		return recoverRate;
 	}
 
 	public double getInfectionMaxDistance() {
