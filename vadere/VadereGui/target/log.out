@@ -45,3 +45,42 @@
 18:22:52,096   INFO ProjectView:195 - all running scenarios interrupted
 18:22:54,363   INFO ApplicationWriter:21 - saved project 'Test' at 'C:\Users\kdras\Desktop\VadereTest'.
 18:22:54,372   INFO ActionAbstractSaveProject:109 - save project
+18:25:20,229   INFO STDOUTERR:15 - Redirect StdOut and StdErr
+18:25:20,233   INFO VadereApplication:25 - starting Vadere GUI...
+18:25:20,253   INFO VadereConfig:66 - Use config file from path C:\Users\kdras\.config\vadere.conf
+18:25:22,166   INFO IOVadere:57 - read project: C:\Users\kdras\Desktop\VadereTest\vadere.project
+18:25:22,403   INFO IOVadere:67 - analyzed scenario files.
+18:25:52,091   INFO IOVadere:88 - analyzed: 38, migrated: 0, upToDate: 38, notMigratable: 0
+18:26:18,723   INFO IOVadere:93 - project loaded: Test
+18:26:18,731   INFO ActionLoadProject:113 - refreshed output table - 2
+18:26:18,734   INFO ProjectView:614 - selected scenario 'Test'
+18:26:18,965   INFO DataProcessingView:102 - switch to expert view
+18:26:19,276   INFO ProjectView:620 - repainted output table
+18:26:19,277   INFO ActionLoadProject:117 - selected the first scenario
+18:26:19,292   INFO ActionLoadProject:124 - project 'Test' loaded.
+18:26:37,355   INFO ScenarioCache:85 - Cache search location: C:\Users\kdras\Desktop\VadereTest\scenarios\__cache__
+18:26:37,358   INFO ScenarioRun:150 - Initializing scenario: Test...
+18:26:37,370   INFO ScenarioRun:131 - scenario context initialized.
+18:26:37,374   INFO ScenarioRun:214 - no background mesh Test.poly was found.
+18:26:37,933   INFO PotentialFieldDistancesBruteForce:49 - initialize floor field (PotentialFieldDistancesBruteForce)
+18:26:37,943   INFO PotentialFieldDistancesBruteForce:106 - Progress:  0% -> 0/90601 [points]
+18:26:38,030   INFO PotentialFieldDistancesBruteForce:106 - Progress: 10% -> 9061/90601 [points]
+18:26:38,057   INFO PotentialFieldDistancesBruteForce:106 - Progress: 20% -> 18121/90601 [points]
+18:26:38,075   INFO PotentialFieldDistancesBruteForce:106 - Progress: 30% -> 27181/90601 [points]
+18:26:38,091   INFO PotentialFieldDistancesBruteForce:106 - Progress: 40% -> 36241/90601 [points]
+18:26:38,105   INFO PotentialFieldDistancesBruteForce:106 - Progress: 50% -> 45301/90601 [points]
+18:26:38,129   INFO PotentialFieldDistancesBruteForce:106 - Progress: 60% -> 54361/90601 [points]
+18:26:38,143   INFO PotentialFieldDistancesBruteForce:106 - Progress: 70% -> 63421/90601 [points]
+18:26:38,158   INFO PotentialFieldDistancesBruteForce:106 - Progress: 80% -> 72481/90601 [points]
+18:26:38,171   INFO PotentialFieldDistancesBruteForce:106 - Progress: 90% -> 81541/90601 [points]
+18:26:38,185   INFO PotentialFieldDistancesBruteForce:96 - floor field initialization time:249[ms]
+18:26:38,188   INFO Topography:393 - Set PedestrianIdCount to start value: 1
+18:26:38,282   INFO EikonalSolverDefaultProvider:24 - floor field initialization time:63[ms]
+18:26:38,294   INFO Simulation:254 - preLoop finished.
+18:29:14,964   INFO Simulation:344 - Finished writing all output files
+18:29:14,971   INFO ProjectView:169 - scenario Test finished
+18:29:18,012   INFO VadereProject:302 - SimulationResult{scenarioName='"Test", nr_overlaps=490392, state='"SimulationRun completed"}
+18:29:18,015   INFO ScenarioRun:232 - Simulation of scenario Test finished.
+18:29:18,017   INFO ProjectView:614 - selected scenario 'Test'
+18:29:18,133   INFO ProjectView:620 - repainted output table
+18:30:28,947   INFO ActionCloseApplication:28 - closing application...
